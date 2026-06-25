@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberGuard // Hakkımızda</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ANA SİTE İLE BİREBİR RENK VE GRID UYUMU */
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020813;
+      /* SİBER IZGARA (GRID) ARKA PLANI */
+      background-image: 
+        linear-gradient(to right, rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* NEON PARILTI EFEKTLERİ */
+    .cyber-neon-text {
+      color: #00f2fe;
+      text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+    }
+
+    .cyber-card {
+      background-color: rgba(4, 15, 33, 0.7);
+      border: 1px solid rgba(0, 242, 254, 0.15);
+    }
+    .cyber-card:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      box-shadow: 0 0 30px rgba(0, 242, 254, 0.1);
+    }
+  </style>
+</head>
+<body class="text-zinc-300 min-h-screen antialiased selection:bg-cyan-500/30 selection:text-cyan-300">
+
+  <!-- ÜST MENÜ (NAVBAR) -->
+  <header class="w-full border-b border-cyan-500/10 bg-[#020813]/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
+      
+      <!-- Logo Alanı -->
+      <a href="cyberquad.html" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <div class="text-cyan-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="mono text-sm font-extrabold tracking-[0.25em] text-white uppercase">CYBERGUARD</span>
+          <span class="mono text-[9px] tracking-[0.15em] text-cyan-400/60">// LAB_V0.1</span>
+        </div>
+      </a>
+      
+      <!-- Menü Linkleri -->
+      <nav class="hidden lg:flex items-center gap-x-8 mono text-[11px] tracking-[0.2em]">
+        <a href="cyberquad.html#anasayfa" class="text-zinc-400 hover:text-white transition-colors">ANA SAYFA</a>
+        <a href="cyberquad.html#analizler" class="text-zinc-400 hover:text-white transition-colors">ANALİZLER</a>
+        <a href="cyberquad.html#reverse" class="text-zinc-400 hover:text-white transition-colors">REVERSE ENGINEERING</a>
+        <a href="nasilkorunmaliyiz.html" class="text-zinc-400 hover:text-white transition-colors">NASIL KORUNMALIYIZ</a>
+        <a href="hakkimizda.html" class="text-cyan-400 font-bold border-b border-cyan-400 pb-1">HAKKIMIZDA</a>
+        <a href="cyberquad.html#iletisim" class="text-zinc-400 hover:text-white transition-colors">İLETİŞİM</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ANA İÇERİK ALANI -->
+  <main class="py-24 relative">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+      
+      <!-- 1. BÖLÜM: MANİFESTO VE GİRİŞ -->
+      <div class="mb-24">
+        <span class="mono text-xs font-bold tracking-[0.25em] text-cyan-400/80 block mb-4">// MISSION_STATEMENT // V0.1.0</span>
+        <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white font-mono leading-tight uppercase max-w-4xl">
+          SİBER TEHDİTLERİN KARANLIK DÜNYASINI <span class="cyber-neon-text">AYDINLATIYORUZ.</span>
+        </h2>
+        <p class="text-zinc-400 mt-6 text-sm md:text-base max-w-4xl font-sans font-normal leading-relaxed">
+          CyberGuard, dijital ekosistemi tehdit eden gelişmiş malkodları (malware), çekirdek seviyesindeki sızma girişimlerini ve proaktif savunma mekanizmalarını incelemek amacıyla kurulmuş bağımsız bir siber güvenlik ve tersine mühendislik analiz laboratuvarıdır[cite: 1]. Amacımız; siber saldırganların kullandığı güncel enfeksiyon vektörlerini, kalıcılık yöntemlerini ve anti-analiz tekniklerini parçalayarak, dijital dünyada tam güvenliği sağlamak adına proaktif Blue Team (Mavi Takım) stratejileri geliştirmektir[cite: 1].
+        </p>
+      </div>
+
+      <!-- 2. BÖLÜM: BİZ NE YAPIYORUZ? (3'LÜ KART YAPISI) -->
+      <div class="mb-24">
+        <div class="flex items-center gap-3 mb-8">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <h3 class="mono text-sm font-bold tracking-[0.2em] text-white uppercase">ÇALIŞMA ALANLARIMIZ</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Kart 1 -->
+          <div class="cyber-card rounded-xl p-6 backdrop-blur-md transition-all duration-300">
+            <div class="text-cyan-400 mb-4">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            </div>
+            <h4 class="text-base font-bold text-white font-mono uppercase mb-3">Tersine Mühendislik</h4>
+            <p class="text-zinc-400 text-xs leading-relaxed font-sans font-normal">
+              Şpheli ve imzasız <code class="text-cyan-400 font-mono text-[11px]">executable</code> dosyaları derleme seviyesine (assembly) indirgeyerek, kod yapılarındaki gizli işlevleri ve arka kapıları (backdoor) açığa çıkarıyoruz[cite: 1].
+            </p>
+          </div>
+
+          <!-- Kart 2 -->
+          <div class="cyber-card rounded-xl p-6 backdrop-blur-md transition-all duration-300">
+            <div class="text-cyan-400 mb-4">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h4 class="text-base font-bold text-white font-mono uppercase mb-3">Zararlı Yazılım Analizi</h4>
+            <p class="text-zinc-400 text-xs leading-relaxed font-sans font-normal">
+              Statik imzaların ötesine geçerek; sistem manipülasyonlarını, dinamik API çözümlerini ve komuta kontrol merkezleri (C2) ile kurulan dış ağ trafiğini izole sanal ortamlarda analiz ediyoruz[cite: 1].
+            </p>
+          </div>
+
+          <!-- Kart 3 -->
+          <div class="cyber-card rounded-xl p-6 backdrop-blur-md transition-all duration-300">
+            <div class="text-cyan-400 mb-4">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            </div>
+            <h4 class="text-base font-bold text-white font-mono uppercase mb-3">Çekirdek & Firmware Güvenliği</h4>
+            <p class="text-zinc-400 text-xs leading-relaxed font-sans font-normal">
+              İşletim sistemi önyükleme aşamasından (boot katmanı) itibaren tehdit oluşturan BIOS Bootkit ve MBR/VBR zararlılarının davranışsal yapılarını inceliyor, donanım seviyesinde koruma modelleri üretiyoruz[cite: 1].
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. BÖLÜM: ANALİZ METODOLOJİMİZ (ADIM ADIM LİSTE) -->
+      <div>
+        <div class="flex items-center gap-3 mb-8">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <h3 class="mono text-sm font-bold tracking-[0.2em] text-white uppercase">LABORATUVAR DİSİPLİNİMİZ</h3>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Adım 1 -->
+          <div class="cyber-card rounded-xl p-6 backdrop-blur-md flex flex-col md:flex-row items-start gap-4">
+            <span class="mono text-sm font-bold text-cyan-400 bg-cyan-950/40 px-3 py-1 rounded border border-cyan-500/20">01</span>
+            <div>
+              <h4 class="text-sm font-bold text-white font-mono uppercase tracking-wider">İzolasyon & Sandboxing</h4>
+              <p class="text-zinc-400 text-xs mt-2 leading-relaxed font-sans font-normal">
+                Analiz süreçlerimizin tamamı, ana ağdan ve fiziksel sistemlerden tamamen arındırılmış, Linux tabanlı izole konteyner mimarilerinde ve sandbox laboratuvar ortamlarında yürütülür[cite: 1].
+              </p>
+            </div>
+          </div>
+
+          <!-- Adım 2 -->
+          <div class="cyber-card rounded-xl p-6 backdrop-blur-md flex flex-col md:flex-row items-start gap-4">
+            <span class="mono text-sm font-bold text-cyan-400 bg-cyan-950/40 px-3 py-1 rounded border border-cyan-500/20">02</span>
+            <div>
+              <h4 class="text-sm font-bold text-white font-mono uppercase tracking-wider">Statik & Dinamik İnceleme</h4>
+              <p class="text-zinc-400 text-xs mt-2 leading-relaxed font-sans font-normal">
+                Ghidra, Sysmon ve ProcessExplorer gibi sektör standardı gelişmiş analiz araçlarını kullanarak zararlının hem kaynak kod mimarisini (statik) hem de runtime esnasındaki canlı hareketlerini (dinamik) raporluyoruz[cite: 1].
+              </p>
+            </div>
+          </div>
+
+          <!-- Adım 3 -->
+          <div class="cyber-card rounded-xl p-6 backdrop-blur-md flex flex-col md:flex-row items-start gap-4">
+            <span class="mono text-sm font-bold text-cyan-400 bg-cyan-950/40 px-3 py-1 rounded border border-cyan-500/20">03</span>
+            <div>
+              <h4 class="text-sm font-bold text-white font-mono uppercase tracking-wider">Proaktif Yama & Raporlama</h4>
+              <p class="text-zinc-400 text-xs mt-2 leading-relaxed font-sans font-normal">
+                Elde ettiğimiz verileri sadece birer bulgu olarak bırakmıyor; sistemlerin bu zafiyetlerden nasıl korunacağına dair somut, uygulanabilir ve defansif güvenlik politikaları üretiyoruz.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

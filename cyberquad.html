@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CyberGuard // Zararlı Yazılım ve Bootkit Analiz Laboratuvarı</title>
+<meta name="description" content="BIOS, MBR ve UEFI seviyesinde çalışan tehditleri tersine mühendislik ile parçalayan cyber defense laboratuvarı." />
+<meta name="theme-color" content="#050B14" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          base: "#050B14",
+          panel: "#0A1422",
+          cyber: "#2DE2E6",
+          cyberDim: "#0Fb8be",
+          ink: "#E6F2F5",
+          muted: "#7C93A3",
+        },
+        fontFamily: {
+          sans: ["Rajdhani", "sans-serif"],
+          mono: ["'Share Tech Mono'", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { background-color:#050B14; }
+  body {
+    font-family:'Rajdhani', sans-serif;
+    color:#E6F2F5;
+    background-image:
+      radial-gradient(60% 50% at 15% 0%, rgba(45,226,230,0.10), transparent 60%),
+      radial-gradient(50% 50% at 90% 10%, rgba(45,226,230,0.07), transparent 60%),
+      radial-gradient(70% 60% at 50% 100%, rgba(20,90,140,0.10), transparent 60%);
+  }
+  /* Horizontal scanline overlay */
+  .scanlines::before{
+    content:"";
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+    opacity:.5;
+  }
+  .mono{ font-family:'Share Tech Mono', monospace; }
+  .neon-text{ text-shadow:0 0 6px rgba(45,226,230,.8), 0 0 18px rgba(45,226,230,.35); }
+  /* Navbar linkleri: hover ile siber mavi (#2DE2E6) parlama */
+  .nav-link{
+    position:relative;
+    color:#94A9B8;
+    white-space:nowrap;
+    transition:color .25s ease, text-shadow .25s ease;
+  }
+  .nav-link:hover,
+  .nav-link.is-active{
+    color:#2DE2E6;
+    text-shadow:0 0 6px rgba(45,226,230,.85), 0 0 18px rgba(45,226,230,.45);
+  }
+  .nav-link::after{
+    content:"";
+    position:absolute;
+    left:0; bottom:-6px;
+    width:0; height:1px;
+    background:#2DE2E6;
+    box-shadow:0 0 8px rgba(45,226,230,.8);
+    transition:width .25s ease;
+  }
+  .nav-link:hover::after,
+  .nav-link.is-active::after{ width:100%; }
+  .glow-card{ transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  .glow-card:hover{
+    transform:translateY(-8px);
+    border-color:rgba(45,226,230,.7);
+    box-shadow:0 0 0 1px rgba(45,226,230,.4), 0 18px 50px -12px rgba(45,226,230,.45);
+  }
+  .btn-cyber{ box-shadow:0 0 18px rgba(45,226,230,.35); }
+  .grid-bg{
+    background-image:
+      linear-gradient(rgba(45,226,230,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45,226,230,.06) 1px, transparent 1px);
+    background-size:42px 42px;
+  }
+  ::-webkit-scrollbar{ width:10px; }
+  ::-webkit-scrollbar-track{ background:#050B14; }
+  ::-webkit-scrollbar-thumb{ background:#123; border-radius:6px; }
+  ::-webkit-scrollbar-thumb:hover{ background:#1a3a44; }
+  .tab-active{ background:#2DE2E6; color:#041017; box-shadow:0 0 18px rgba(45,226,230,.5); }
+  .modal-scroll::-webkit-scrollbar{ width:8px; }
+
+  /* ===== TAM EKRAN ANALİZ SAYFASI ===== */
+  #analysisPage{ animation:pageIn .35s ease; }
+  @keyframes pageIn{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* Geri dön butonu */
+  .back-btn{
+    display:inline-flex; align-items:center; gap:.6rem;
+    font-family:'Share Tech Mono', monospace;
+    font-size:12px; letter-spacing:.18em; color:#2DE2E6;
+    border:1px solid rgba(45,226,230,.4);
+    background:rgba(45,226,230,.05);
+    padding:.7rem 1.2rem; border-radius:.25rem;
+    transition:background .25s ease, box-shadow .25s ease, transform .25s ease;
+  }
+  .back-btn:hover{
+    background:rgba(45,226,230,.15);
+    box-shadow:0 0 20px rgba(45,226,230,.45);
+    transform:translateX(-4px);
+  }
+
+  /* ===== ASSEMBLY TERMİNAL / SYNTAX HIGHLIGHT ===== */
+  .asm-box{
+    background:#03070D;
+    border:1px solid rgba(45,226,230,.18);
+    border-radius:.55rem;
+    padding:1rem 0;
+    overflow-x:auto;
+    font-family:'Share Tech Mono', monospace;
+    font-size:12.5px; line-height:1.75;
+    box-shadow:inset 0 0 50px rgba(0,0,0,.65), 0 0 0 1px rgba(45,226,230,.05);
+  }
+  .asm-line{ display:flex; align-items:flex-start; padding:0 1rem; white-space:pre; }
+  .asm-line:hover{ background:rgba(45,226,230,.06); }
+  .asm-ln{
+    flex:0 0 auto; width:2.6rem; text-align:right;
+    padding-right:1rem; margin-right:1rem;
+    color:#33505c; user-select:none;
+    border-right:1px solid rgba(45,226,230,.12);
+  }
+  .asm-addr{ color:#4D8A99; display:inline-block; min-width:4.5rem; }
+  .asm-code{ white-space:pre; }
+  .t-mn{ color:#2DE2E6; font-weight:700; }   /* komut: in, out, mov, jmp */
+  .t-reg{ color:#7CFFB2; }                    /* register: al, ax, ds, rax */
+  .t-num{ color:#FFD166; }                    /* port/sayı: 0x30, 0x40 */
+  .t-kw{ color:#5FB0C4; }                     /* byte, ptr, dword */
+  .t-cm{ color:#5C7080; font-style:italic; } /* yorum */
+</style>
+</head>
+<body class="scanlines antialiased overflow-x-hidden">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-40 backdrop-blur-md bg-base/80 border-b border-cyber/15">
+  <div class="max-w-7xl mx-auto px-4 lg:px-8 py-3 lg:h-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <!-- Logo -->
+    <a href="#anasayfa" class="flex items-center gap-3 group">
+      <span class="grid place-items-center w-9 h-9 rounded-md border border-cyber/40 bg-cyber/5">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 text-cyber" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/>
+        </svg>
+      </span>
+      <span class="leading-none">
+        <span class="block text-xl font-bold tracking-wider neon-text text-ink">CYBERGUARD</span>
+        <span class="block mono text-[10px] tracking-[0.3em] text-cyber/80">// LAB.V0.1</span>
+      </span>
+    </a>
+
+    <!-- Nav: her ekranda görünür, yan yana -->
+    <nav class="flex flex-wrap items-center justify-center sm:justify-end gap-x-5 gap-y-2 md:gap-x-8 mono text-[11px] md:text-[12px] tracking-[0.2em]">
+      <a href="#anasayfa" class="nav-link is-active">ANA SAYFA</a>
+      <a href="#analizler" class="nav-link">ANALİZLER</a>
+      <a href="#reverse" class="nav-link">REVERSE ENGINEERING</a>
+     <a href="nasilkorunmaliyiz.html" class="mono text-[11px] md:text-[12px] tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">NASIL KORUNMALIYIZ</a>
+     <a href="hakkimizda.html" class="text-zinc-400 hover:text-white transition-colors">HAKKIMIZDA</a>
+     <a href="iletisim.html" class="text-zinc-400 hover:text-white transition-colors">İLETİŞİM</a>
+    </nav>
+  </div>
+</header>
+
+<main class="relative z-10">
+
+<!-- ================= HERO ================= -->
+<section id="anasayfa" class="relative grid-bg">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-base/40 to-base"></div>
+  <div class="relative max-w-7xl mx-auto px-5 lg:px-8 pt-20 pb-16">
+    <p class="mono text-cyber/80 text-xs tracking-[0.35em] mb-6">// CYBER_DEFENSE_LAB / V0.1.0</p>
+    <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight max-w-4xl text-balance">
+      ZARARLI YAZILIM VE <span class="text-cyber neon-text">BOOTKIT</span> ANALİZ LABORATUVARI
+    </h1>
+    <p class="mt-8 max-w-2xl text-lg text-muted leading-relaxed">
+      BIOS, MBR ve UEFI seviyesinde çalışan tehditleri tersine mühendislik ile parçalıyor;
+      davranışsal analizler ve Assembly seviyesi kod incelemeleri yayınlıyoruz <span class="text-cyber animate-pulse">_</span>
+    </p>
+
+    <div class="mt-10 flex flex-wrap gap-4">
+      <a href="#analizler" class="btn-cyber mono text-xs tracking-[0.2em] bg-cyber text-base font-bold px-7 py-4 rounded-sm hover:bg-cyber/90 transition-colors">
+        ANALİZLERİ KEŞFET
+      </a>
+      <a href="#reverse" class="mono text-xs tracking-[0.2em] border border-cyber/40 text-cyber px-7 py-4 rounded-sm hover:bg-cyber/10 transition-colors">
+        REVERSE ENGINEERING
+      </a>
+    </div>
+
+    <!-- Stat boxes -->
+    <div class="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-px bg-cyber/15 border border-cyber/15 rounded-md overflow-hidden">
+      <div class="bg-panel/80 p-6 flex items-center gap-4">
+        <svg viewBox="0 0 24 24" class="w-7 h-7 text-cyber shrink-0" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        <div><div class="text-3xl font-bold">4</div><div class="mono text-[10px] tracking-[0.2em] text-muted">AKTİF ANALİZ</div></div>
+      </div>
+      <div class="bg-panel/80 p-6 flex items-center gap-4">
+        <svg viewBox="0 0 24 24" class="w-7 h-7 text-cyber shrink-0" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
+        <div><div class="text-3xl font-bold">2</div><div class="mono text-[10px] tracking-[0.2em] text-muted">BOOTKIT VAKASI</div></div>
+      </div>
+      <div class="bg-panel/80 p-6 flex items-center gap-4">
+        <span class="mono text-cyber text-lg shrink-0">01<br>10</span>
+        <div><div class="text-3xl font-bold">2</div><div class="mono text-[10px] tracking-[0.2em] text-muted">REVERSE ENG.</div></div>
+      </div>
+      <div class="bg-panel/80 p-6 flex items-center gap-4">
+        <svg viewBox="0 0 24 24" class="w-7 h-7 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+        <div><div class="text-2xl font-bold text-emerald-400">ONLINE</div><div class="mono text-[10px] tracking-[0.2em] text-muted">LAB DURUMU</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ÖNCELİKLİ TEHDİT KATEGORİLERİ ================= -->
+<section class="max-w-7xl mx-auto px-5 lg:px-8 py-20">
+  <div class="flex items-end justify-between flex-wrap gap-4 mb-10">
+    <div>
+      <p class="mono text-cyber/80 text-xs tracking-[0.35em] mb-3">// PRIORITY_THREATS</p>
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-wide">ÖNCELİKLI <span class="text-cyber neon-text">TEHDİT</span> KATEGORİLERİ</h2>
+    </div>
+    <a href="#analizler" class="mono text-xs tracking-[0.2em] text-cyber hover:underline">TÜMÜNÜ GÖR →</a>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <article class="glow-card lg:col-span-2 relative rounded-lg overflow-hidden border border-cyber/20 bg-panel cursor-pointer group" data-id="bios-bootkit">
+      <div class="relative h-72 sm:h-96 overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80" alt="Devre kartı bootkit analizi" class="w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500" crossorigin="anonymous"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-panel via-panel/40 to-transparent"></div>
+        <span class="absolute top-4 left-4 mono text-[10px] tracking-[0.2em] bg-cyber text-base font-bold px-3 py-1.5 rounded-sm">★ ÖNE ÇIKAN ANALİZ</span>
+      </div>
+      <div class="p-7 -mt-20 relative">
+        <span class="mono text-[10px] tracking-[0.2em] inline-flex items-center gap-2 text-cyber border border-cyber/30 rounded px-2 py-1">▣ BIOS &amp; MBR BOOTKITS</span>
+        <h3 class="mt-4 text-2xl sm:text-3xl font-bold leading-tight">BIOS &amp; MBR Bootkit Analizi: Düşük Seviye Tehditler</h3>
+        <p class="mt-3 text-muted leading-relaxed max-w-2xl">Gelişmiş Kalıcı Tehdit (APT) / Firmware Seviyesi Bootkit. SPI Flash Belleği (BIOS/UEFI Katmanı) ve Donanım I/O Portları. Bu analizde incelenen zararlı kodlar, işletim sistemi...</p>
+        <span class="mt-5 inline-flex items-center gap-2 mono text-xs tracking-[0.2em] text-cyber">İNCELE ↗</span>
+      </div>
+    </article>
+
+    <div class="grid grid-rows-2 gap-6">
+      <article class="glow-card relative rounded-lg overflow-hidden border border-cyber/20 bg-panel cursor-pointer group" data-id="mirai1">
+        <div class="relative h-32 overflow-hidden">
+          <img src="https://images.ctfassets.net/yewqr8zk7e5s/1KhxpuR699aTcae3qXPKqP/2bfaacd3cba975154e950f4393785306/DDos_Attacks.jpg?w=1024&q=80&fm=jpg" alt="Mirai IoT DDoS saldırı görseli" class="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-500" crossorigin="anonymous"/>
+          <div class="absolute inset-0 bg-gradient-to-t from-panel to-transparent"></div>
+        </div>
+        <div class="p-5">
+          <span class="mono text-[10px] tracking-[0.2em] text-cyber flex items-center gap-1">✦ VIRUS ANALYSIS</span>
+          <h4 class="mt-2 font-bold leading-snug">Mirai Botnet Varyantı: Linux Ham Paket Enjeksiyonu ve Saldırı Motoru</h4>
+          <span class="mt-3 inline-flex mono text-xs tracking-[0.2em] text-cyber">İNCELE ↗</span>
+        </div>
+      </article>
+
+      <article class="glow-card relative rounded-lg overflow-hidden border border-cyber/20 bg-panel cursor-pointer group" data-id="re-pe">
+        <div class="relative h-32 overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80" alt="Shellcode karanlık yeşil görseli" class="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-500" crossorigin="anonymous"/>
+          <div class="absolute inset-0 bg-gradient-to-t from-panel to-transparent"></div>
+        </div>
+        <div class="p-5">
+          <span class="mono text-[10px] tracking-[0.2em] text-fuchsia-400 flex items-center gap-1">⟁ SHELLCODE ANALYSIS</span>
+          <h4 class="mt-2 font-bold leading-snug">Dinamik Shellcode Analizi &amp; SIMD Dekriptör Döngüsü</h4>
+          <span class="mt-3 inline-flex mono text-xs tracking-[0.2em] text-cyber">İNCELE ↗</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ANALİZLER (TABS + CARDS) ================= -->
+<section id="analizler" class="max-w-7xl mx-auto px-5 lg:px-8 py-12">
+  <p class="mono text-cyber/80 text-xs tracking-[0.35em] mb-3">// ANALYSIS_FEED</p>
+  <h2 class="text-3xl sm:text-4xl font-bold tracking-wide mb-8">ANALİZLER</h2>
+
+  <!-- Tabs -->
+  <div id="tabs" class="flex flex-wrap gap-3 mb-10 mono text-[11px] tracking-[0.2em]">
+    <button data-filter="all" class="tab-btn tab-active px-5 py-2.5 rounded-sm border border-cyber/30">TÜMÜ</button>
+    <button data-filter="bios" class="tab-btn px-5 py-2.5 rounded-sm border border-cyber/20 text-muted hover:text-cyber hover:border-cyber/40 transition-colors">BIOS &amp; MBR BOOTKITS</button>
+    <button data-filter="genel" class="tab-btn px-5 py-2.5 rounded-sm border border-cyber/20 text-muted hover:text-cyber hover:border-cyber/40 transition-colors">GENEL ANALİZ</button>
+  </div>
+
+  <!-- Cards grid -->
+  <div id="cardGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</section>
+
+<!-- ================= SECTIONS (Analizler / Reverse) ================= -->
+<section id="reverse" class="max-w-7xl mx-auto px-5 lg:px-8 py-16">
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="rounded-lg border border-cyber/20 bg-panel/60 p-8 hover:border-cyber/50 transition-colors">
+      <p class="mono text-cyber/80 text-xs tracking-[0.3em] mb-3">// 01 / SECTION</p>
+      <h3 class="text-2xl font-bold tracking-wide mb-3">ANALİZLER</h3>
+      <p class="text-muted leading-relaxed">Virüs davranışları, sistem üzerindeki izleri ve ekran görüntüleriyle desteklenmiş zengin bir blog arşivi.</p>
+    </div>
+    <div class="rounded-lg border border-cyber/20 bg-panel/60 p-8 hover:border-cyber/50 transition-colors">
+      <p class="mono text-cyber/80 text-xs tracking-[0.3em] mb-3">// 02 / SECTION</p>
+      <h3 class="text-2xl font-bold tracking-wide mb-3">REVERSE ENGINEERING</h3>
+      <p class="text-muted leading-relaxed">Derinlemesine kod analizleri ve renkli Assembly kod blokları ile düşük seviyeli teknik dosyalar.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer id="iletisim" class="relative z-10 border-t border-cyber/15 bg-base/80 mt-10">
+  <div class="max-w-7xl mx-auto px-5 lg:px-8 py-14 grid md:grid-cols-3 gap-10">
+    <div id="hakkimizda">
+      <div class="flex items-center gap-3 mb-4">
+        <svg viewBox="0 0 24 24" class="w-6 h-6 text-cyber" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+        <span class="text-xl font-bold tracking-wider neon-text">CYBERGUARD</span>
+      </div>
+      <p class="text-muted leading-relaxed max-w-xs">Zararlı yazılım ve bootkit analizine adanmış teknik araştırma laboratuvarı.</p>
+    </div>
+
+    <div>
+      <p class="mono text-cyber/80 text-xs tracking-[0.3em] mb-4">// İLETİŞİM</p>
+      <div class="flex items-center gap-4">
+        <a href="#" aria-label="E-posta" class="w-11 h-11 grid place-items-center rounded-md border border-cyber/25 text-cyber hover:bg-cyber/10 transition-colors">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        </a>
+        <a href="#" aria-label="GitHub" class="w-11 h-11 grid place-items-center rounded-md border border-cyber/25 text-cyber hover:bg-cyber/10 transition-colors">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.8 9.6.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.5-1.1-4.5-5 0-1.1.4-2 1-2.7-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.5 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 22 12.2C22 6.6 17.5 2 12 2z"/></svg>
+        </a>
+        <a href="#" aria-label="Twitter" class="w-11 h-11 grid place-items-center rounded-md border border-cyber/25 text-cyber hover:bg-cyber/10 transition-colors">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M22 5.9c-.7.3-1.5.6-2.3.7.8-.5 1.5-1.3 1.8-2.3-.8.5-1.7.8-2.6 1a4 4 0 0 0-6.9 3.7A11.4 11.4 0 0 1 3.8 4.6a4 4 0 0 0 1.2 5.4c-.6 0-1.2-.2-1.8-.5a4 4 0 0 0 3.2 4 4 4 0 0 1-1.8.1 4 4 0 0 0 3.7 2.8A8 8 0 0 1 2 18a11.3 11.3 0 0 0 6.1 1.8c7.4 0 11.4-6.1 11.4-11.4v-.5c.8-.6 1.5-1.3 2-2z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div>
+      <p class="mono text-cyber/80 text-xs tracking-[0.3em] mb-4">// SİSTEM DURUMU</p>
+      <div class="inline-flex items-center gap-2 mono text-sm tracking-widest text-emerald-400">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        ALL_SYSTEMS_OPERATIONAL
+      </div>
+      <p class="mono text-xs text-muted mt-5 leading-relaxed">© 2026 CyberGuard Lab. // Tüm hakları saklıdır.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= TAM EKRAN ANALİZ SAYFASI ================= -->
+<div id="analysisPage" class="fixed inset-0 z-50 hidden overflow-y-auto bg-base scanlines">
+  <div class="min-h-full grid-bg">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-base/30 to-base pointer-events-none"></div>
+
+    <div class="relative max-w-6xl mx-auto px-5 lg:px-8 py-8">
+      <!-- Geri dön -->
+      <button id="backBtn" class="back-btn">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        ANALİZLERE GERİ DÖN
+      </button>
+
+      <!-- Hero görsel -->
+      <div class="relative mt-7 h-56 sm:h-72 rounded-xl overflow-hidden border border-cyber/20">
+        <img id="apImg" src="" alt="" class="w-full h-full object-cover opacity-70" crossorigin="anonymous"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-base via-base/50 to-transparent"></div>
+        <span id="apTag" class="absolute top-5 left-5 mono text-[10px] tracking-[0.2em] text-cyber border border-cyber/40 bg-base/70 px-3 py-1.5 rounded"></span>
+      </div>
+
+      <!-- Başlık + meta -->
+      <h1 id="apTitle" class="mt-8 text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-balance max-w-4xl"></h1>
+      <p id="apClass" class="mono text-sm tracking-[0.15em] text-cyber/80 mt-4"></p>
+
+      <div class="mt-10 flex flex-col gap-8 pb-24 max-w-4xl">
+        <article class="w-full">
+          <p class="mono text-[11px] tracking-[0.3em] text-cyber/80 mb-4">// THREAT_INTELLIGENCE</p>
+          <div id="apDesc" class="space-y-4 text-[15px] sm:text-base text-ink/85 leading-relaxed"></div>
+        </article>
+
+        <aside class="w-full">
+          <div class="flex items-center justify-between mb-3">
+            <p class="mono text-[11px] tracking-[0.3em] text-cyber/80">// ASSEMBLY & DECOMPILE ANALYSIS</p>
+            <span class="flex gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500/70"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400/70"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/70"></span>
+            </span>
+          </div>
+          <div id="apCode" class="asm-box" style="min-height: 450px; width: 100%;"></div>
+          <p class="mono text-[10px] tracking-[0.2em] text-muted mt-3">disassembly // x86-64 output dump</p>
+        </aside>
+      </div>
+
+<script>
+/* ====================================================================
+   VERİ — Kendi görsellerinizi 'imageURL' alanına yapıştırarak değiştirin.
+   ==================================================================== */
+const analyses = [
+  {
+    id: "mirai1",
+    category: "genel",
+    badge: "VIRUS ANALYSIS",
+    tag: "GENEL ANALİZ",
+    title: "Mirai Botnet Varyantı: Linux Ham Paket Enjeksiyonu ve Saldırı Motoru",
+    threatClass: "Tehdit Sınıfı: IoT Botnet / Dağıtık Hizmet Reddi (DDoS) Paket Enjektörü.",
+    desc: [
+        "1. Bellek Adresleme ve Yapı (Struct) Yönetimi: Fonksiyonun başında yer alan local_18 = &DAT_080a0f9c; satırı, tıpkı ilk koddaki gibi Mirai'nin statik veri segmentine (data segment) işaret eder. Virüs, saldırı yapacağı hedef IP listesini ve paket başlıklarını (packet headers) bu bellek adresinden besler.",
+        "2. FUN_08069f08 ile POSIX Soket Manipülasyonu: Kodun ilerleyen kısımlarında çağrılan FUN_08069f08(&local_9c) gibi rutinler, standart Linux C kütüphanesindeki socket(), setsockopt() veya bind() çağrılarının Ghidra tarafından decompile edilmiş halidir. Mirai, işletim sisteminin normal ağ kurallarını bypass etmek için SOCK_RAW (Ham Soket) açar. Bu sayede gönderdiği paketlerin kaynak IP adresini sahteleyebilir (IP Spoofing).",
+        "3. for Döngüsü ve Paket Paket İlerleme: for (; (int ****)0x1 < ppppiVar7; ...) yapısı, botnetin emir aldıktan sonra hedefe durmaksızın ağ paketi basmak için kullandığı döngüdür. Kod içindeki CONCAT31(local_58._1_3_,2) gibi bit seviyesindeki birleştirmeler, TCP/UDP paket başlıklarının (Checksum, TTL, Port numaraları) işlemci seviyesinde çok hızlı bir şekilde manipüle edildiğini gösterir.",
+        "4. Çekirdek Seviyesinde Hata Kontrolleri (FUN_08048372): Zararlı, bellek sınırlarını aşmamak ve Linux çekirdeği tarafından öldürülmemek (SIGSEGV - Segmentation Fault almamak) için sürekli CARRY4 (elde biti kontrolü) ve alt rutin çağırma kontrolleri yapar. Eğer bir bellek hatası tespit ederse, FUN_08048372 subroutine'i ile süreci güvenli bir şekilde sonlandırır veya yeniden başlatır."
+    ],
+    imageURL: "https://images.ctfassets.net/yewqr8zk7e5s/1KhxpuR699aTcae3qXPKqP/2bfaacd3cba975154e950f4393785306/DDos_Attacks.jpg?w=1024&q=80&fm=jpg",
+    code: `// --- Mirai Botnet ELF Variant: Raw Packet Injection & Attack Engine ---
+void __regparm3 FUN_08063462(undefined4 param_1_00, uint param_2_00, undefined4 *param_3_00, int **param_3)
+{
+    // Point to static data segment for attack vectors
+    local_18 = &DAT_080a0f9c; 
+    
+    // Check operating system network socket state
+    FUN_08069f08(&local_9c);
+    
+    if (local_b8 != (int *****)0x0) {
+        local_58 = local_b8;
+        local_14 = (int *****)0x0;
+        
+        // High-speed attack packet looping mechanism
+        for (; (int *****)0x1 < pppppiVar8; pppppiVar8 = pppppiVar8 - 1) {
+            
+            // Build raw TCP/UDP Header data on memory
+            if (local_28[(int)pppppiVar10 * 6 + 1] <= local_20) {
+                pppppiVar4 = (int *****)local_28[(int)pppppiVar13 * 6];
+                pppppiVar3 = (int *****)local_28[(int)pppppiVar13 * 6 + 1];
+                
+                // Inject custom checksum or port configuration
+                local_58 = CONCAT31(local_58._1_3_, 2); 
+            }
+        }
+    }
+    
+    // Critical memory guard - prevent Linux kernel from killing the thread
+    if (CARRY4((uint)local_10c, (uint)local_54)) {
+        FUN_0806a1d6(); // Terminate or cycle the socket gracefully
+        return;
+    }
+}`,
+  },
+  {
+    id: "bios1",
+    category: "bios",
+    badge: "BIOS & MBR BOOTKITS",
+    tag: "BIOS & MBR BOOTKITS",
+    title: "BIOS & MBR Bootkit Analizi: Düşük Seviye Tehditler",
+    threatClass: "Gelişmiş Kalıcı Tehdit (APT) / Firmware Seviyesi Bootkit.",
+    desc: [
+      "Bu analizde, işletim sisteminin çekirdek (Kernel) koruma mekanizmaları henüz devreye girmemişken, sistemin en erken önyükleme (Real Mode) evresinde çalışan gelişmiş bir bootkit varyantının Assembly kodları incelenmektedir.",
+      "Öne Çıkan Teknik Bulgular:",
+      "Doğrudan Donanım İletişimi (Hardware I/O Port Access): Analiz edilen kod bloklarında yer alan 0x60: in al, 0x30 ve 0x8e: out 0x40, al talimatları, zararlının işletim sistemini tamamen baypas ederek doğrudan anakart üzerindeki donanım portları (I/O Ports) ile haberleştiğini göstermektedir.",
+      "BIOS Çipi ve SPI Flash Manipülasyon Kanıtı: Düşük seviyeli I/O portlarına yapılan bu doğrudan müdahaleler, zararlının anakart üzerindeki BIOS/UEFI firmware çipine (SPI Flash Memory) kalıcı olarak yerleştiğinin en güçlü ve somut kanıtıdır. Kodun bu bölümü, BIOS yazma korumalarını (SPI Write Protect) aşarak çip seviyesinde kalıcılık (Non-Volatile Persistence) sağlamak amacıyla tasarlanmıştır. Bu durum, diski tamamen biçimlendirseniz veya işletim sistemini değiştirseniz dahi zararlının donanım katmanında canlı kalmaya devam edeceğini (Ring -2 / SMM Seviyesi Tehdit) doğrulamaktadır. İşlemci Koruma Halkası İhlali: Klasik zararlı yazılımlar kullanıcı modunda (Ring 3) çalışırken, bu bootkit CPU'nun en ilkel modundaki yetkileri istismar ederek donanım ve firmware seviyesinde tam kontrol elde etmektedir.",
+      "Bu analiz, sistem güvenliğinin yalnızca işletim sistemi seviyesinde değil, doğrudan firmware ve donanım katmanında da ne kadar kritik olduğunu bir kez daha kanıtlamaktadır."
+    ],
+    imageURL: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+    asm: `0xc:\tadd\tal, byte ptr [rax + rdx*2]
+0xf:\tadd\tbyte ptr [rax + rcx*8], cl
+0x12:\tadd\tbyte ptr [rbx], dl
+0x14:\tsbb\tal, al
+0x16:\tadd\tedx, dword ptr [rbx]
+0x18:\tfsub\tdword ptr [rax + 0x350100]
+0x1e:\tadd\tbyte ptr [rdi], al
+0x20:\tadd\tedx, dword ptr [rdx]
+0x22:\tjo\t0x94
+0x24:\tadd\tbyte ptr [rdx], ah
+0x26:\tmov\tal, 0x5b
+0x28:\tor\tbyte ptr [rax], al
+0x2a:\tadc\tebx, dword ptr [rcx]
+0x2c:\tjs\t0x2e
+0x2e:\tadc\tebx, dword ptr [rax + 0x25010050]
+0x34:\tadd\tbyte ptr [rdi], cl
+0x36:\tpush\trax
+0x37:\tadd\tbyte ptr [rax], al
+0x39:\txor\tdword ptr [rax + 0x3a81cc0], esp
+0x3f:\tadd\tdl, byte ptr [rax]
+0x41:\tadd\tdword ptr [rcx + 1], edx
+0x44:\tadd\tbyte ptr [rax], dh
+0x46:\tfstp\tqword ptr [rax]
+0x48:\tadc\tbyte ptr [rax], al
+0x4a:\tadc\teax, dword ptr [rax + 8]
+0x4d:\tadd\tbyte ptr [rbx], dl
+0x4f:\tpush\trax
+0x50:\tor\tbyte ptr [rax], al
+0x52:\tadc\tesp, dword ptr [rax + 8]
+0x55:\tadd\tbyte ptr [rbx], dl
+0x57:\tjo\t0x61
+0x59:\tadd\tbyte ptr [rbx], dl
+0x5b:\tor\tbyte ptr [rax], 0
+0x5e:\tand\tah, al
+0x60:\tin\tal, 0x30
+0x62:\tadd\tbyte ptr [rbx], dl
+0x64:\tadd\tbyte ptr [rax], dl
+0x66:\tadd\tbyte ptr [rdx], ah
+0x68:\tjo\t0x4f
+0x6a:\tadc\tbyte ptr [rax], al
+0x6c:\tadc\tedx, dword ptr [rax]
+0x6e:\tadc\tbyte ptr [rax], al
+0x70:\tadc\tesp, dword ptr [rax]
+0x72:\tor\tbyte ptr [rax], al
+0x74:\txchg\tebx, eax
+0x75:\tpush\trbp
+0x76:\toutsb\tdx, byte ptr [rsi]
+0x77:\timul\tebp, dword ptr [rsi + 0x6f], 0x77
+0x7b:\toutsb\tdx, byte ptr [rsi]
+0x82:\tor\tbyte ptr [rax], al
+0x84:\tadc\teax, eax
+0x86:\tor\tbyte ptr [rax], al
+0x88:\tadc\tesp, eax
+0x8a:\tor\tbyte ptr [rax], al
+0x8c:\tand\tdl, byte ptr [rax]
+0x8e:\tout\t0x40, al
+0x90:\tadd\tbyte ptr [rbx], dl
+0x92:\tand\tbyte ptr [rax], cl
+0x94:\tadd\tbyte ptr [rbx], dl
+0x96:\tor\tbyte ptr [rax], al
+0x99:\tadc\tesp, dword ptr [rax + 8]
+0xa7:\tor\tbyte ptr [rax], al
+0xa9:\tadc\tesp, eax
+0xab:\tor\tbyte ptr [rax], al
+0xad:\tand\tdl, byte ptr [rax]
+0xaf:\tout\t0x40, eax
+0xb3:\tpush\trax
+0xc8:\tcall\t0x301300fd
+0xe1:\tjmp\t0x40130116
+0xf1:\txor\tr14d, r14d
+0xf8:\ttest\trcx, rcx`
+  },
+  {
+    id: "mirai-elf",
+    category: "genel",
+    badge: "VIRUS ANALYSIS",
+    tag: "GENEL ANALİZ",
+    title: "Mirai Botnet Varyantı: ELF Tersine Mühendislik ve IoT Tarama Algoritması",
+    threatClass: "Tehdit Sınıfı: IoT Botnet / ELF Dağıtık Hizmet Reddi (DDoS) Zararlısı.",
+   desc: [
+        "1. Bellek Üzerinde İterasyon ve Sabit Değer Kontrolleri: Kodun gövdesindeki while(true) döngüsü ve içinde yer alan if (uVar6 == 0x11), else if (uVar6 == 0x12) ve else if (uVar6 == 0x55) gibi switch-case benzeri kontroller, zararlının bir Ağ Protokolü Ayrıştırıcısı (Protocol Parser) olduğunu gösterir. 0x11 (onluk tabanda 17) doğrudan UDP, 0x06 veya benzeri varyasyonlar ise TCP soket durumlarını veya Mirai'nin hedef cihaz tipine göre (MIPS, ARM, x86) bellekten veri ayırma rutinlerini temsil eder.",
+        "2. FUN_080612ae(4, 0x14) ve 0x18 Bellek Blok Yönetimi: Kod içerisinde sıkça çağrılan FUN_080612ae(4,0x14) ve FUN_0804c715(4,0x24) gibi fonksiyonlar, Linux çekirdeğinden dinamik olarak bellek ayıran (malloc benzeri) yapılardır. Mirai, tarama yaparken yakaladığı IP adreslerini ve deneyeceği sızdırılmış fabrikasyon şifreleri (default credentials) bu 0x14 (20 bayt) ve 0x18 (24 bayt) genişliğindeki küçük bellek hücrelerinde (struct) saklayarak hafızayı optimize eder.",
+        "3. FUN_08067571 İle Kaba Kuvvet (Brute-Force) Gönderimi: FUN_08067571(local_24[3], *(undefined4 *)(local_48 + 0xc0)...) satırı, botnetin hedef cihaza veri paketleri enjekte ettiği ya da komuta kontrol sunucusundan (C2) gelen şifrelenmiş konfigürasyon verilerini çözdüğü (decrypt) kritik saldırı rutinidir.",
+        "4. _regparm3 ve Optimizasyon Sırrı: Fonksiyonun en başında yer alan __regparm3 özniteliği, Mirai'nin IoT cihazlarının zayıf işlemcilerinde (MIPS/ARM Router'lar) bile maksimum hızda çalışması ve saniyede binlerce IP'yi tarayabilmesi için derleyici seviyesinde optimize edildiğinin en net kanıtıdır."
+    ],
+    imageURL: "https://www.a10networks.com/wp-content/uploads/inside-the-mirai-malware-that-powers-iot-botnets-1.jpg",
+    code: `// --- Mirai Botnet ELF Variant: IoT Network Scan & State Machine ---
+void __regparm3 FUN_08063a52(undefined4 param_1_00, int *****param_2, int **param_3, int *param_1) 
+{
+    // Memory initialization and layout setup for target iteration
+    local_18 = &DAT_080a0f9c; 
+    local_5c = param_3;
+    while( true ) {
+        uVar5 = FUN_080670fe(); // Fetch next target IP pointer
+        FUN_08064bf5();         // Process socket state
+        uVar6 = (uint)local_ac & 0xffff; // Extract target protocol/port state
+        
+        if (uVar6 == 0x11) { // UDP / Layer 4 Scan State Handling
+            FUN_08065666();
+            if (((uint)local_f4 & 0x3f) == 0) {
+                local_54 = local_ec;
+            } else {
+                // Execute credential injection / brute-force payload
+                FUN_08067571(local_24[3], *(undefined4 *)(local_48 + 0xc0), local_ec);
+            }
+        } 
+        else if (uVar6 == 0x12) { // TCP / Telnet/SSH Syn Scan Handling
+            FUN_08065666();
+            if (local_f4 == (int *****)&DAT_0000000c) {
+                FUN_08067571(local_24[3], *(undefined4 *)(local_48 + 0xc0), local_ec);
+            }
+        }
+        else if (uVar6 == 0x55) { // Command & Control (C2) Synchronize State
+            FUN_0806745a(local_48, local_f4, local_f0, local_ec);
+        }
+        
+        ppiVar11 = ppiVar11 + 3; // Move to the next network packet block
+    }
+}`,
+  },
+  {
+    id: "irochain",
+    category: "genel",
+    badge: "VIRUS ANALYSIS",
+    tag: "GENEL ANALİZ",
+    title: "Irochain Wiper & Ransomware: Gelişmiş Tehdit İstihbarat Analizi",
+    threatClass: "Tehdit Sınıfı: Wiper / Fidye Yazılımı Hibrit.",
+    desc: [
+        "1. Aşama: Bellekteki Güvenlik Ajanlarının Avlanması (K32EnumProcessModules) Zararlı yazılım, K32EnumProcessModules ve K32GetModuleFileNameExW API'lerini kullanarak kendi süreç belleğine yüklenmiş olan tüm dinamik kütüphanelerin (DLL) tam listesini çıkarır. Bu listeyi kendi kara listesiyle karşılaştırarak antivirüs, EDR veya Sandbox izleme modüllerini tespit eder.",
+        "2. Aşama: Güvenlik Kütüphanelerinin Zorla Bellekten Silinmesi (Agresif Unhooking) En Tehlikeli Bulgulardan Biri: Tespit edilen güvenlik DLL'lerini etkisiz hale getirmek için FreeLibrary API'sini bir döngü içinde tam 32 defaya kadar (iVar2 < 0x20) üst üste çağırır. Bu agresif döngü, Windows'un referans sayacını çökerterek güvenlik modülünü bellekten zorla söküp atar.",
+        "3. Aşama: Doğu Asya Ülkelerine Özel Coğrafi Hedefleme (getSystemCP) Zararlı, getSystemCP fonksiyonu ile kurban işletim sisteminin ana yazı dili kodlamasını sorgular. Eğer sistem Japonya (ja-JP), Çin (zh-CN), Güney Kore (ko-KR) veya Tayvan (zh-TW) kod sayfalarına sahipse, imha mekanizmasını aktif eder."
+    ],
+    imageURL: "https://media.licdn.com/dms/image/sync/v2/D4D27AQFCKIYUIWvSlg/articleshare-shrink_800/B4DZ3w7TuhJgAM-/0/1777863572903?e=2147483647&v=beta&t=5NNJ8FohLQnGabR9C0RmIbXEriPyknBZYyZZHPr_rF8",
+    code: `// --- IROCHAIN WIPER: BELLEK BIKTIRMA VE COĞRAFİ HEDEFLEME MOTORU ---
+// [KOD 1] AGRESİF ANTİ-EDR / UNHOOKING DÖNGÜSÜ
+pvVar4 = GetCurrentProcess();
+iVar2 = K32EnumProcessModules(pvVar4, 0, 0, local_4048);
+if ((iVar2 != 0) && (local_4048[0] != 0)) {
+    iVar2 = K32EnumProcessModules(pvVar4, ppHVar5, local_4048[0], local_4048);
+    do {
+        iVar3 = K32GetModuleFileNameExW(pvVar4, ppHVar5[lVar9], local_2038, 0x1000);
+        if ((iVar3 != 0) && (uVar8 = FUN_140019280(local_4038, local_2038, uVar7), (int)uVar8 == 0)) {
+            *ppHVar10 = ppHVar5[lVar9]; // Güvenlik DLL'i tespit edildi
+            ppHVar10 = ppHVar10 + 1;
+        }
+        lVar9 = lVar9 + 1;
+    } while (lVar9 < (longlong)(ulonglong)uVar1);
+
+    // Referans sayacını çökertene kadar FreeLibrary döngüsü (32 Kez)
+    if (0 < lVar9) {
+        do {
+            iVar2 = K32GetModuleFileNameExW(pvVar4, *ppHVar10, local_2038, 0x1000);
+            if (iVar2 != 0) {
+                iVar3 = FreeLibrary(*ppHVar10);
+                for (iVar2 = 1; (iVar3 != 0 && (iVar2 < 0x20)); iVar2 = iVar2 + 1) {
+                    iVar3 = FreeLibrary(*ppHVar10); // Zorla bellekten silme
+                }
+            }
+            lVar9 = lVar9 + -1;
+            ppHVar10 = ppHVar10 + 1;
+        } while (lVar9 != 0);
+    }
+}
+
+// [KOD 2] DOĞU ASYA BÖLGESEL DİL FİLTRELEME VE HEDEFLEME
+uVar4 = getSystemCP(param_1);
+if (uVar4 != 0) {
+    if (uVar4 == 0x3a4) {
+        pwVar7 = L"ja-JP";  // Japonya
+    }
+    else if (uVar4 == 0x3a8) {
+        pwVar7 = L"zh-CN";  // Çin (Basitleştirilmiş)
+    }
+    else if (uVar4 == 0x3b5) {
+        pwVar7 = L"ko-KR";  // Güney Kore
+    }
+    else if (uVar4 == 0x3b6) {
+        pwVar7 = L"zh-TW";  // Tayvan
+    }
+    *(wchar_t **)(param_2 + 0x220) = pwVar7;
+}`
+  },
+  {
+    id: "remus",
+    category: "genel",
+    badge: "VIRUS ANALYSIS",
+    tag: "GENEL ANALİZ",
+    title: "Remus Stealer: Kayıt Defteri Manipülasyonu ve Bölgesel Dil (Locale) Kontrolü",
+    threatClass: "Tehdit Sınıfı: Bilgi Hırsızı (Infostealer).",
+    desc: [
+        "1. Aşama: Coğrafi Konum Sınırlandırması (Geo-Targeting & Evasion) - Gerçekleşen Eylem: Zararlı yazılım Control Panel\\Desktop\\ResourceLocale ve .DEFAULT\\Control Panel\\International\\Locale kayıt defteri (Registry) yollarını sorgular. Siber Güvenlik Amacı: Kurban makinenin işletim sistemi dilini (LCID) tespit eder. Bu kontrol, zararlının sadece belirli hedef ülkelerde çalışmasını (örneğin Türkiye) sağlamak veya otomatik analiz laboratuvarlarından (Sandbox) kaçmak için kullanılan kritik bir Anti-Analiz taktiğidir.",
+        "2. Aşama: Süreç Enjeksiyonu Ön Hazırlığı (.exe Avcılığı) - Gerçekleşen Eylem: lstrcmpiW fonksiyonu ile sistem değişkenlerindeki yolları tarayarak sonu .exe ile biten dosyaları tespit eder ve GetFileAttributesW ile bu dosyaların niteliklerini kontrol eder. Siber Güvenlik Amacı: Remus Stealer, sistemde halihazırda güvenli olarak çalışan yasal bir Windows sürecini (Process) gözüne kestirir. Bu aşama, ilerleyen adımlarda asıl casusluk kodunun o yasal sürecin içine enjekte edilmesi (Process Injection / Hollowing) için yapılan altyapı çalışmasıdır.",
+        "3. Aşama: RichEdit İllüzyonu ve Form Manipülasyonu - Gerçekleşen Eylem: Arka planda RichEd20 ve RichEd32 DLL kütüphanelerini belleğe çağırarak CreateWindowExW and DialogBoxParamW API'leri üzerinden sahte bir grafik arayüz (GUI) penceresi oluşturur. Siber Güvenlik Amacı: Kullanıcının ekranda yasal bir kurulum veya hata penceresi görmesini sağlayarak dikkat dağıtır. Bu esnada kurban sahte formlarla meşgul edilirken, arka planda Remus Stealer'ın şifre çalıcı modülleri sistemi çoktan infaz etmeye başlar."
+        
+    ],
+    imageURL: "https://www.bleepstatic.com/content/posts/2026/05/infostealer-header.jpg",
+    code: `// --- REMUS STEALER CRITICAL RECON & ANTI-ANALYSIS LAYER ---
+FUN_00406188(0x80000001, L"Control Panel\\Desktop\\ResourceLocale", (LPCWSTR)0x0, &DAT_00450248, (HKEY)0x0);
+if (DAT_00450248 == 0) {
+    FUN_00406188(0x80000003, L".DEFAULT\\Control Panel\\International", L"Locale", &DAT_00450248, (HKEY)0x0);
+}
+
+// 2. Sistemdeki Yasal .exe Dosyalarının Avlanması ve Nitelik Kontrolü
+iVar6 = lstrlenW(lpString);
+if (((lpString < lpString + iVar6 + -4) &&
+    (iVar6 = lstrcmpiW(lpString + iVar6 + -4, u_.exe_0040a388), iVar6 == 0)) &&
+    ((DVar7 = GetFileAttributesW(lpString), DVar7 == 0xffffffff || ((DVar7 & 0x10) == 0)))) {
+    FUN_00405bdb(lpString);
+}
+
+// 3. Sahte Kullanıcı Arayüzü Oluşturma ve RichEdit İllüzyonu
+iVar9 = FUN_00406624("RichEd20");
+if (iVar9 == 0) {
+    FUN_00406624("RichEd32");
+}
+BVar10 = GetClassInfoW((HINSTANCE)0x0, L"RichEdit20W", (LPWNDCLASSW)&DAT_00472e80);
+IVar11 = DialogBoxParamW(DAT_0047aee0, (LPCWSTR)(DAT_00472ec0 + 0x69U & 0xffff), (HWND)0x0, (DLGPROC)&LAB_00403d58, 0);
+
+if (IVar11 != 0) {
+    FUN_0040140b(5); // [CLEANUP] Hata durumunda bellek temizleme rutini
+    FUN_004038fa(1);
+    return IVar11;
+}
+
+iVar9 = FUN_004053f5((HWND)0x0);
+if (iVar9 == 0) {
+    FUN_0040140b(1);
+    goto LAB_00403c76; // [EVASION] Pencere doğrulanamazsa güvenli çıkış moduna dallanma
+}
+if (DAT_00472eac == 0) {
+    FUN_0040140b(2);
+}
+IVar11 = 2;
+
+// 4. Meşru Süreç Kaydı ve Gizli Pencere Oluşturma (Bypass & Persistence)
+else {
+    _DAT_00472e84 = FUN_00401000; // Callback fonksiyon adresi kancalanıyor (WindowProc)
+    _DAT_00472e90 = DAT_0047aee0;
+    _DAT_00472ea4 = &PTR_DAT_0040a380;
+    _DAT_00472e94 = DAT_00472ec8;
+    AVar2 = RegisterClassW((WNDCLASSW *)&DAT_00472e80); // Sahte pencere sınıfı OS mimarisine kaydediliyor
+    
+    if (AVar2 != 0) {
+        SystemParametersInfoW(0x30, 0, &iStack_10, 0); // SPI_GETWORKAREA: Ekran koordinatları alınıyor
+        
+        // [MALICIOUS EXECUTION] Görgüsüz bir pencere yerine arka planda çalışacak gizli Windows nesnesi tetikleniyor
+        DAT_00450228 = CreateWindowExW(0x80, (LPCWSTR)&PTR_DAT_0040a380, (LPCWSTR)0x0, 0x80000000,
+                                       iStack_10, iStack_c, iStack_8 - iStack_10, iStack_4 - iStack_c,
+                                       (HWND)0x0, (HMENU)0x0, DAT_0047aee0, (LPVOID)0x0);
+        goto LAB_00403ba7;
+    }
+LAB_00403c76:
+    IVar11 = 0;
+}
+return IVar11;`
+      },
+  
+  {
+  
+  
+    id: "re-pe",
+    category: "bios",
+    badge: "REVERSE ENGINEERING",
+    tag: "SHELLCODE & DEOBFUSCATION",
+    title: "Dinamik Shellcode Analizi & SIMD Dekriptör Döngüsü",
+    threatClass: "Tehdit Sınıfı: Bellek İçi Karartılmış Zararlı Kod (Runtime Obfuscated Shellcode / SIMD Loop).",
+    desc: [
+        "1. SIMD Vektör Kayıtçıları ile Bellek Üzerinde Şifre Çözme (Deobfuscated): Kodda yer alan paddd xmm9, pslld xmm6, 8 ve orps xmm5, xmm6 gibi komutlar, işlemcinin SSE/AVX uzantılarını kullanarak 128-bitlik veri bloklarını (XMM) paralel olarak işler. Zararlı yazılım, tespit edilmemek için bellekte sakladığı shellcode'u antivirüs yazılımlarının gözü önünde çok hızlı bir şekilde deobfuscate eder (şifresini çözer).",
+        "2. pblendvb ve Bit Düzeyinde Maskeleme (Masking) Taktiği: Koddaki 660f3810dd pblendvb xmm3, xmm5, xmm0 yapısı, xmm0 kayıtçısındaki koşul maskesine göre xmm5 ve xmm3 içeriklerini bayt bayt birleştirir. Bu teknik, imza tabanlı EDR (Endpoint Detection and Response) sistemlerini atlatmak amacıyla, dinamik analiz (Sandbox) esnasında kod akışını karmaşıklaştırmak için kullanılan ileri düzey bir anti-analiz yöntemidir.",
+        "3. Sürekli Bellek İterasyonu ve Çıkış Kontrolü: Kodun alt kısımlarındaki lea rax, [rax+8] ve 0f857afeffff jne döngüsü, deobfuscation işlemi bitene kadar bellekte 8'er bayt (QWORD) ilerleyerek paketi çözmeye devam eder. İşlem bittiğinde test eax, eax ve je kontrolleriyle döngü sonlandırılarak bellek korumaları (PAGE_EXECUTE_READWRITE) altında asıl zararlı shellcode payload'u tetiklenir."
+    ],
+    imageURL: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    code: `00007ff5\`e8ae1510 66440ffe0d37ebffff paddd xmm9,xmmword ptr [00007ff5\`e8ae0050]
+00007ff5\`e8ae1519 660f72f608      pslld    xmm6,8
+00007ff5\`e8ae151e 8d7601          lea      esi,[rsi+1]
+00007ff5\`e8ae1521 0f56ee          orps     xmm5,xmm6
+00007ff5\`e8ae1524 83ef01          sub      edi,1
+00007ff5\`e8ae1527 0f28c1          movaps   xmm0,xmm1
+00007ff5\`e8ae152a 660f3810dd      pblendvb xmm3,xmm5,xmm0
+00007ff5\`e8ae152f 660fd618        movq     mmword ptr [rax],xmm3
+00007ff5\`e8ae1533 660f6ddb        punpckhqdq xmm3,xmm3
+00007ff5\`e8ae1537 660fd61c08      movq     mmword ptr [rax+rcx],xmm3
+00007ff5\`e8ae153c 488d4008        lea      rax,[rax+8]
+00007ff5\`e8ae1540 0f857afeffff    jne      00007ff5\`e8ae13c0
+00007ff5\`e8ae1546 48898510ffffff  mov      qword ptr [rbp-0F0h],rax
+00007ff5\`e8ae154d 89bd1cffffff    mov      dword ptr [rbp-0E4h],edi
+00007ff5\`e8ae1553 440f298de0feffff movaps  xmmword ptr [rbp-120h],xmm9
+00007ff5\`e8ae155b e932000000      jmp      00007ff5\`e8ae1592
+00007ff5\`e8ae1560 89951cffffff    mov      dword ptr [rbp-0E4h],edx
+00007ff5\`e8ae1566 4c898510ffffff  mov      qword ptr [rbp-0F0h],r8
+00007ff5\`e8ae156d 0f298500ffffff  movaps  xmmword ptr [rbp-100h],xmm0
+00007ff5\`e8ae1574 0f2995e0feffff  movaps  xmmword ptr [rbp-120h],xmm2
+00007ff5\`e8ae157b 0f29adb0feffff  movaps  xmmword ptr [rbp-150h],xmm5
+00007ff5\`e8ae1582 440f298d80feffff movaps  xmmword ptr [rbp-180h],xmm9
+00007ff5\`e8ae158a 440f299570feffff movaps  xmmword ptr [rbp-190h],xmm10
+00007ff5\`e8ae1592 e932000000      jmp      00007ff5\`e8ae15c9
+00007ff5\`e8ae1597 89951cffffff    mov      dword ptr [rbp-0E4h],edx
+00007ff5\`e8ae159d 4c898510ffffff  mov      qword ptr [rbp-0F0h],r8
+00007ff5\`e8ae15a4 0f298500ffffff  movaps  xmmword ptr [rbp-100h],xmm0
+00007ff5\`e8ae15ab 0f2995e0feffff  movaps  xmmword ptr [rbp-120h],xmm2
+00007ff5\`e8ae15b2 0f29adb0feffff  movaps  xmmword ptr [rbp-150h],xmm5
+00007ff5\`e8ae15b9 440f298d80feffff movaps  xmmword ptr [rbp-180h],xmm9
+00007ff5\`e8ae15c1 440f299570feffff movaps  xmmword ptr [rbp-190h],xmm10
+00007ff5\`e8ae15c9 0f288530ffffff  movaps  xmm0,xmmword ptr [rbp-0D0h]
+00007ff5\`e8ae15d0 660f7ec0        movd     eax,xmm0
+00007ff5\`e8ae15d4 85c0            test     eax,eax
+00007ff5\`e8ae15d6 0f849e000000    je       00007ff5\`e8ae167a
+00007ff5\`e8ae15dc 448b8d1cffffff  mov      r9d,dword ptr [rbp-0E4h]
+00007ff5\`e8ae15e3 4585c9          test     r9d,r9d
+00007ff5\`e8ae15e6 0f848e000000    je       00007ff5\`e8ae167a
+00007ff5\`e8ae15ec 488b8510ffffff  mov      rax,qword ptr [rbp-0F0h]
+00007ff5\`e8ae15f3 8b4da8          mov      ecx,dword ptr [rbp-58h]
+00007ff5\`e8ae15f6 418bd1          mov      edx,r9d
+00007ff5\`e8ae15f9 0f289de0feffff  movaps  xmm3,xmmword ptr [rbp-120h]
+00007ff5\`e8ae1600 0f282549eaffff  movaps  xmm4,xmmword ptr [00007ff5\`e8ae0050]
+00007ff5\`e8ae1607 660f1f840000000000 nop    word ptr [rax+rax]
+00007ff5\`e8ae1610 0f284590        movaps  xmm0,xmmword ptr [rbp-70h]
+00007ff5\`e8ae1614 660f66c3        pcmpgtd  xmm0,xmm3
+00007ff5\`e8ae1618 0f284d80        movaps  xmm1,xmmword ptr [rbp-80h]
+00007ff5\`e8ae161c 660f66cb        pcmpgtd  xmm1,xmm3
+00007ff5\`e8ae1620 0f558500ffffff  andnps  xmm0,xmmword ptr [rbp-100h]
+00007ff5\`e8ae1627 0f28d3          movaps  xmm2,xmm3
+00007ff5\`e8ae162a 660ffe9570feffff paddd   xmm2,xmmword ptr [rbp-190h]
+00007ff5\`e8ae1632 0f54c1          andps    xmm0,xmm1
+00007ff5\`e8ae1635 0f288d80feffff  movaps  xmm1,xmmword ptr [rbp-180h]
+00007ff5\`e8ae163c 660f66ca        pcmpgtd  xmm1,xmm2
+00007ff5\`e8ae1640 f30f7e10        movq     xmm2,mmword ptr [rax]
+00007ff5\`e8ae1644 0f54c8          andps    xmm1,xmm0
+00007ff5\`e8ae1647 f30f7e0408      movq     xmm0,mmword ptr [rax+rcx]
+00007ff5\`e8ae164c 660ffedc        paddd    xmm3,xmm4
+00007ff5\`e8ae1650 660f6cd0        punpcklqdq xmm2,xmm0
+00007ff5\`e8ae1654 83ea01          sub      edx,1
+00007ff5\`e8ae1657 0f28c1          movaps   xmm0,xmm1
+00007ff5\`e8ae165a 660f381095b0feffff pblendvb xmm2,xmmword ptr [rbp-150h],xmm0
+00007ff5\`e8ae1663 660fd610        movq     mmword ptr [rax],xmm2
+00007ff5\`e8ae1667 660f6dd2        punpckhqdq xmm2,xmm2
+00007ff5\`e8ae166b 660fd61408      movq     mmword ptr [rax+rcx],xmm2
+00007ff5\`e8ae1670 488d4008        lea      rax,[rax+8]
+00007ff5\`e8ae1674 0f8596ffffff    jne      00007ff5\`e8ae1610
+00007ff5\`e8ae167a 4c8b55b8        mov      r10,qword ptr [rbp-48h]
+00007ff5\`e8ae167e 8b45a4          mov      eax,dword ptr [rbp-5Ch]
+00007ff5\`e8ae1681 4d8d1402        lea      r10,[r10+rax]
+00007ff5\`e8ae1685 440f289d50ffffff movaps  xmm11,xmmword ptr [rbp-0B0h]
+00007ff5\`e8ae168d 66440ffe1dbae9ffff paddd xmm11,xmmword ptr [00007ff5\`e8ae0050]
+00007ff5\`e8ae1696 4c8b5dd0        mov      r11,qword ptr [rbp-30h]
+00007ff5\`e8ae169a 8b4dac          mov      ecx,dword ptr [rbp-54h]
+00007ff5\`e8ae169d 4d8d1c0b        lea      r11,[r11+rcx]
+00007ff5\`e8ae16a1 448b65b4        mov      r12d,dword ptr [rbp-4Ch]
+00007ff5\`e8ae16a5 4183ec01        sub      r12d,1
+00007ff5\`e8ae16a9 4c8b6dc0        mov      r13,qword ptr [rbp-40h]
+00007ff5\`e8ae16ad 4d8d6d10        lea      r13,[r13+10h]
+00007ff5\`e8ae16b1 4c8b75c8        mov      r14,qword ptr [rbp-38h]
+00007ff5\`e8ae16b5 4d8d7608        lea      r14,[r14+8]
+00007ff5\`e8ae16b9 4c8955b8        mov      qword ptr [rbp-48h],r10
+00007ff5\`e8ae16bd 4c895dd0        mov      qword ptr [rbp-30h],r11
+00007ff5\`e8ae16c1 448965b4        mov      dword ptr [rbp-4Ch],r12d
+00007ff5\`e8ae16c5 4c896dc0        mov      qword ptr [rbp-40h],r13
+00007ff5\`e8ae16c9 4c8975c8        mov      qword ptr [rbp-38h],r14
+00007ff5\`e8ae16cd 440f299d50ffffff movaps  xmmword ptr [rbp-0B0h],xmm11
+00007ff5\`e8ae16d5 0f855bfbffff    jne      00007ff5\`e8ae1236
+00007ff5\`e8ae16db b800000000      mov      eax,0
+00007ff5\`e8ae16e0 488b4dd8        mov      rcx,qword ptr [rbp-28h]
+00007ff5\`e8ae16e4 8981b0070000    mov      dword ptr [rcx+7B0h],eax
+00007ff5\`e8ae16ea 0f287500        movaps  xmm6,xmmword ptr [rbp]
+00007ff5\`e8ae16ee 0f287d10        movaps  xmm7,xmmword ptr [rbp+10h]
+00007ff5\`e8ae16f2 440f284520      movaps  xmm8,xmmword ptr [rbp+20h]
+00007ff5\`e8ae16f7 440f284d30      movaps  xmm9,xmmword ptr [rbp+30h]
+00007ff5\`e8ae16fc 440f285540      movaps  xmm10,xmmword ptr [rbp+40h]
+00007ff5\`e8ae1701 440f285d50      movaps  xmm11,xmmword ptr [rbp+50h]
+00007ff5\`e8ae1706 440f286560      movaps  xmm12,xmmword ptr [rbp+60h]
+00007ff5\`e8ae170b 440f286d70      movaps  xmm13,xmmword ptr [rbp+70h]
+00007ff5\`e8ae1710 440f28b580000000 movaps  xmm14,xmmword ptr [rbp+80h]
+00007ff5\`e8ae1718 440f28bd90000000 movaps  xmm15,xmmword ptr [rbp+90h]
+00007ff5\`e8ae1720 4881c438020000  add      rsp,238h
+00007ff5\`e8ae1727 5b              pop      rbx
+00007ff5\`e8ae1728 5e              pop      rsi
+00007ff5\`e8ae1729 5f              pop      rdi
+00007ff5\`e8ae1732 5d              pop      rbp`
+  },
+  {
+    id: "valleyrat-analysis",
+    category: "genel",
+    badge: "REVERSE ENGINEERING",
+    tag: "REVERSE ENGINEERING",
+    title: "ValleyRat RAT: Dinamik Bellek İçi Çekirdek Yapıcı ve Obfuscation Analizi",
+    threatClass: "Tehdit Sınıfı: Tersine Mühendislik, Yığın Manipülasyonu ve Evasion",
+    imageURL: "https://framerusercontent.com/images/Gx1ivS3w50YKHw8VbqaeI8K0lWA.jpg?width=1000&height=560",
+    desc: [
+      "1. Yığın (Stack) Üzerinde Dinamik String İnşası: Zararlı, şifrelenmiş ham verileri yığın mimarisi üzerinde FUN_00439470 aracılığıyla karakter karakter çözerek belleğe işlemektedir. Bu teknik, statik analiz araçlarının (IDA Pro, Ghidra) string tablolarını okumasını engeller.",
+      "2. Özel Belirteçler ile API Çözme (0x24 / 0x2a): Kod içerisinde sırasıyla 0x24 ('$') ve 0x2a ('*') karakterleri birer kontrol mekanizması olarak kullanılır. '$' belirteci, dinamik olarak çözülmesi gereken bir API adresini işaret ederken, '*' belirteci maske çözme (deobfuscation) rutinini tetikler.",
+      "3. Anti-Forensics Bellek Temizleme: İşlem bitiminde FUN_00410000 fonksiyonu çağrılarak yığında kullanılan kritik veriler sıfırlanır. Bu sayede RAM adli bilişim (Memory Forensics) analizlerinde zararlının izine rastlanması zorlaştırılır.",
+      "4. Dinamik Boyutlandırma ve Sınır Kontrolleri: param_4 parametresine göre dinamik bellek boyutları belirlenir (minimum 2, maksimum 0x11 / 17 bayt). Bu esneklik, ValleyRat'in farklı platformlarda (x86/x64) ve farklı C2 yapılandırmalarında çalışabilmesini sağlar."
+    ],
+    code: `// VALLEYRAT DYNAMIC STRING RECONSTRUCTION CORE MOTOR
+FUN_00439720(undefined8 param_1, undefined8 param_2, undefined8 param_3, char param_4, byte param_5, int param_6, int param_7, undefined8 *param_8) 
+{
+  short sVar1;
+  undefined uVar2;
+  int iVar3;
+  undefined8 uVar4;
+  bool bVar7;
+  undefined auStack_88 [32];
+  longlong local_48;
+  int local_3c;
+  ushort local_34;
+  char local_32;
+  undefined4 local_1c;
+  
+  local_48 = 0;
+  local_1c = 0;
+  
+  if (param_4 == 0) {
+    if (param_6 < 2) { param_6 = 2; }
+    else if (0x11 < param_6) { param_6 = 0x11; }
+  } else {
+    param_6 = 0x13;
+  }
+
+  uVar4 = FUN_0043a3b0(&local_34, param_3, param_4, param_6);
+  if (local_34 - 0x7ff < 2) {
+    FUN_004393b0(auStack_88, (&PTR_DAT_006f2d18)[local_34 - 0x7ff]);
+  } else {
+    while (0 < local_3c) {
+      uVar2 = FUN_00439470(auStack_88);
+      FUN_00439360(auStack_88, uVar2);
+      local_3c = local_3c - 1;
+    }
+    
+    if (sVar1 == 0x24) {
+      iVar3 = FUN_00411940(*param_8, DAT_006f1290);
+      if (iVar3 != 0) { FUN_004393b0(auStack_88, *param_8); }
+    } 
+    else if (sVar1 == 0x2a) {
+      FUN_004394a0(auStack_88);
+    }
+    else if (param_5 == 4) {
+      if (local_32 == 0) {
+        if (*(byte *)(param_8 + 1) < 4) {
+          FUN_00410720(&local_48, (&PTR_u_$*@@@_006f2d28)[*(byte *)(param_8 + 1)]);
+        } else {
+          FUN_00410720(&local_48, PTR_u_*_$@@_006f2d40);
+        }
+      }
+    }
+  }
+  
+  FUN_00410000(&local_48);
+  return local_1c;
+}`
+  },
+  {
+    id: "advanced-drojan-dropper",
+            category: "reverse",
+            badge: "DROPPER / LotL",
+            tag: "INF ENGINEERING & BYPASS",
+            title: "Advanced Dropper: Living off the Land & INF Execution Engine",
+            threatClass: "Tehdit Sınıfı: Gelişmiş Dropper / Windows Güvenilir Süreç Suistimali (Bypass Mimarisi).",
+            desc: [
+                "1. Dinamik Karakter Analizi ve Ayrıştırma: Zararlı yazılım, kurban sisteme bırakılan dosya yolunu (param_1) karakter karakter buffer dizilerine kopyalar ve string sonlandırıcılar ile güvenli bellek alanları inşa eder.",
+                "2. Çift Katmanlı Uzantı Yakalama (.BAT / .INF): Dosya ismi üzerindeki nokta (.) karakterini tarayarak dinamik bir dallanma yaratır. .BAT uzantıları için komut satırı motorunu tetiklerken, .INF uzantıları için gelişmiş kurumsal bypass mekanizmasını devreye sokar.",
+                "3. Whitelist (Beyaz Liste) ve EDR Bypass: Antivirüs engellerini aşmak amacıyla rundll32.exe üzerinden meşru setupapi.dll kütüphanesini ve InstallHinfSection API'sini kancalayarak siber saldırıyı işletim sisteminin kendi güvenli araçlarına icra ettirir."
+            ],
+            imageURL: "https://plus.unsplash.com/premium_photo-1733317239304-a6bf462a2596?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8YW50aSUyMHZpcnVzfGVufDB8fDB8fHww", 
+            code: `undefined8 FUN_140001684(STRSAFE_LPSTR param_1, undefined8 param_2, undefined8 *param_3, undefined4 *param_4) {
+    // [ANTI-ANALYSIS] Stack canaris kontrolü ve XOR mekanizması ile bellek bütünlüğü doğrulanıyor
+    local_48 = DAT_14000c008 ^ (ulonglong)auStackY_6a8;
+    pcVar8 = local_558; lVar12 = 0x104;
+    do {
+        if ((lVar12 == -0x7ffffefa) || (pcVar8[(longlong)param_1 - (longlong)local_558] == '\\0')) break;
+        *pcVar8 = pcVar8[(longlong)param_1 - (longlong)local_558]; // Karakter buffer kopyalama
+        pcVar8 = pcVar8 + 1; lVar12 = lVar12 + -1;
+    } while (lVar12 != 0);
+    *pcVar3 = '\\0'; // String yapısı güvenli şekilde sonlandırılıyor
+
+    // [PAYLOAD ANALYSIS] Dosya yapısı taranarak uzantı tespiti tetikleniyor (.INF / .BAT Kontrolü)
+    lpString1 = FUN_140007d68(psVar13, 0x2e);
+    if ((lpString1 == 0) || (CompareStringA(0x7f, 1, lpString1, -1, ".INF", -1) != 2)) {
+        psVar13 = FUN_140007d68(psVar13, 0x2e);
+        if ((psVar13 != 0) && (CompareStringA(0x7f, 1, psVar13, -1, ".BAT", -1) == 2)) {
+            // [TEHDİT ROTASI 1] .BAT scripti doğrulandı. command.com /c parametresi tetikleniyor
+            pBVar9 = LocalAlloc(0x40, lVar6 + 8); // Dinamik heap bellek tahsisi
+            if (pBVar9 != 0) {
+                FUN_14000114c((char *)pBVar9, lVar6 + 8, "command.com /c", local_668);
+LAB_140001bd1:
+                *param_3 = pBVar9; return 1; // İcra başarılı, üst fonksiyona sinyal gönderiliyor
+            }
+        }
+    } else {
+        // [TEHDİT ROTASI 2 - KRİTİK] .INF uzantısı yakalandı! Güvenilir Windows motoru istismar ediliyor
+        DVar2 = GetFileAttributesA((LPCSTR)local_668);
+        pBVar9 = LocalAlloc(0x40, 0x200);
+        if (pBVar9 != 0) {
+            // Dosya içerisindeki kurulum direktifleri ve Reboot kuralları analiz ediliyor
+            DAT_14000d544 = GetPrivateProfileIntA("DefaultInstall", "Reboot", 0, (LPCSTR)local_668);
+            *param_4 = 1;
+            
+            // [EDR / AV BYPASS] Antivirüs korumalarını aşmak için setupapi.dll kütüphanesi hafızaya çağrılıyor
+            if (DAT_14000de78 == 0) { pcVar8 = "setupx.dll"; } 
+            else { pcVar8 = "setupapi.dll"; }
+            
+            // LIVING OFF THE LAND: rundll32.exe kullanılarak InstallHinfSection API'si tetikleniyor
+            FUN_14000114c((char *)pBVar9, 0x200, "rundll32.exe", "InstallHinfSection", pcVar8);
+            goto LAB_140001bd1;
+        }
+    }
+    return 0;
+}`
+        },
+        {
+        id: "agent-tesla",
+            category: "genel",
+            badge: "REVERSE ENGINEERING",
+            tag: "AGENT TESLA DECOMPILED",
+            title: "Agent Tesla: Ghidra ile Statik Kod ve Komuta Merkezi Analizi",
+            threatClass: "Tehdit Sınıfı: Gelişmiş Bilgi Hırsızı (Infostealer) & Dispatcher Kontrol Mekanizması.",
+            desc: [
+                "1. Aşama: Ana Komuta ve Durum Dağıtıcı Kontrolü (Dispatcher) - Gerçekleşen Eylem: FUN_00401434 fonksiyonu, parametre olarak gelen durum kodunu (local_30) okuyarak devasa bir switch-case yapısı tetikler. Siber Güvenlik Amacı: Zararlı yazılımın tüm yeteneklerini (dosya çalma, ağ trafiği, kalıcılık) tek bir ana merkezden yönetmesini ve modüler olarak çalışmasını sağlar.",
+                "2. Aşama: Gizli API Çözümleme ve Dinamik DLL Yükleme (case 0x2c) - Gerçekleşen Eylem: Kod statik olarak incelendiğinde tehlikeli Windows API'leri görünmez. Zararlı yazılım case 0x2c altında GetModuleHandleA, LoadLibraryExA ve GetProcAddress fonksiyonlarını tetikleyerek runtime esnasında belleğe dinamik kütüphane enjekte eder. Siber Güvenlik Amacı: Antivirüs ve EDR yazılımlarının statik imza taramalarını (AV Bypass) tamamen atlatmaktır.",
+                "3. Aşama: Kayıt Defteri Üzerinde Kalıcılık Sağlama (case 0x32 / 0x33) - Gerçekleşen Eylem: RegOpenKeyExA yardımıyla Windows'un başlangıç (Run) kayıt defteri yollarına sızılır ve RegSetValueExA ile zararlı süreç sisteme gömülür. Siber Güvenlik Amacı: Bilgisayar her yeniden başladığında analistin ruhu duymadan Agent Tesla'nın arka planda otomatik olarak yeniden tetiklenmesini (Persistence) garantiye almaktır.",
+                "4. Aşama: Keşif ve Hassas Dosya Arama Döngüsü (case 0x3c / 0x3d) - Gerçekleşen Eylem: FindFirstFileA ve FindNextFileA API'leri kullanılarak kurbanın diskindeki kullanıcı şifreleri, tarayıcı veri tabanları (SQLite), kripto cüzdanları ve özel dosyalar taranır. Siber Güvenlik Amacı: Casusluk ve veri hırsızlığı (Infostealing) operasyonu öncesinde sistemdeki kritik veri hedeflerini haritalandırmaktır.",
+                "5. Aşama: Operasyon Sonrası İzleri Silme ve Kendi Dosyasını Yok Etme (case 0x3e) - Gerçekleşen Eylem: GetModuleFileNameA ile zararlı kendi disk yolunu tespit eder, ardından süreç sonlandırılmadan milisaniyeler önce DeleteFileA API'sini çağırarak kendi binary dosyasını diskten temizler. Siber Güvenlik Amacı: Adli bilişim (Forensics) uzmanlarının ve mavi takım ekiplerinin sistemde analiz yapabileceği hiçbir kanıt ve iz (Artifact) bırakmamaktır."
+            ],
+            imageURL: "https://i0.wp.com/dciber.org/wp-content/uploads/2021/09/agent-tesla-rat-steals-login-passwords-from-vpn-browsers-ftp-email-clients_en.jpg",
+            code: `// --- AGENT TESLA DECOMPILED DISPATCHER MATRIX (FUN_00401434) ---
+HWND FUN_00401434(HWND param_1) {
+    // ... Ghidra Yerel Değişken Tanımlamaları ve Stack Ayarları ...
+    HMODULE hModule;
+    HKEY pHVar8;
+    LONG res;
+    char szModuleName[260];
+    uint local_30;
+
+    local_30 = *(uint *)(param_1 + 4);
+
+    // [CRITICAL] Zararlı Yazılımın Tüm Operasyonlarını Yöneten Ana Matris
+    switch(local_30) {
+
+        case 0x10: // Dosya Taşıma ve Dropper Yayılımı
+            FUN_00405d37(param_1);
+            break;
+
+        case 0x2c: // [ANTI-ANALYSIS] Dinamik API Çözümleme Aşaması
+            hModule = GetModuleHandleA("kernel32.dll");
+            if (hModule != (HMODULE)0x0) {
+                // Kritik API adresleri bellekte dinamik olarak çözülüyor
+                pFVar15 = GetProcAddress(hModule, "LoadLibraryExA");
+                pFVar16 = GetProcAddress(hModule, "GetProcAddress");
+            }
+            break;
+
+        case 0x32: // Registry Temizliği / Kontrolü
+            RegDeleteValueA(pHVar8, "SubProcess");
+            break;
+
+        case 0x33: // [PERSISTENCE] Kayıt Defterine Sızma ve Otomatik Başlangıç
+            res = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run", 0, 0x20006, &pHVar8);
+            if (res == 0) {
+                // Kendini sistem başlangıcına ekleyerek kalıcılık sağlıyor
+                RegSetValueExA(pHVar8, "SubProcess", 0, 1, (BYTE *)malware_path, path_len);
+                RegCloseKey(pHVar8);
+            }
+            break;
+
+        case 0x3c: // [RECONNAISSANCE] Dosya Sisteminde Arama Başlatma
+            pvVar12 = FindFirstFileA((LPCSTR)lpFileName, (LPWIN32_FIND_DATAA)&local_1d4);
+            break;
+
+        case 0x3d: // Disk Boyunca Casusluk Dosyalarını Taramaya Devam Etme
+            BVar11 = FindNextFileA(pvVar12, (LPWIN32_FIND_DATAA)&local_1d4);
+            break;
+
+        case 0x3e: // [ANTI-FORENSICS] İzleri Temizleme ve Kendini İmha Etme (Self-Deletion)
+            GetModuleFileNameA((HMODULE)0x0, szModuleName, 0x104);
+            // Süreç sonlanırken diskteki kaynak dosyasını tamamen siliyor
+            DeleteFileA(szModuleName);
+            break;
+
+        default:
+            break;
+    }
+    return (HWND)0x1;
+}`
+      }
+  ]
+
+
+
+/* ===================== KART RENDER ===================== */
+const grid = document.getElementById("cardGrid");
+const badgeColor = (b) => b.includes("REVERSE") ? "text-fuchsia-400" : "text-cyber";
+const badgeIcon  = (b) => b.includes("REVERSE") ? "⟁" : "✦";
+
+function cardHTML(a){
+  return `
+  <article class="glow-card relative rounded-lg overflow-hidden border border-cyber/20 bg-panel cursor-pointer group" data-id="${a.id}">
+    <div class="relative h-44 overflow-hidden">
+      <img src="${a.imageURL}" alt="${a.title}" class="w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500" crossorigin="anonymous"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-panel via-panel/30 to-transparent"></div>
+    </div>
+    <div class="p-5">
+      <span class="mono text-[10px] tracking-[0.2em] ${badgeColor(a.badge)} flex items-center gap-1">${badgeIcon(a.badge)} ${a.badge}</span>
+      <h3 class="mt-2.5 font-bold text-lg leading-snug">${a.title}</h3>
+      <p class="mt-2 text-sm text-muted leading-relaxed line-clamp-2">${a.threatClass}</p>
+      <span class="mt-4 inline-flex items-center gap-2 mono text-xs tracking-[0.2em] text-cyber">İNCELE ↗</span>
+    </div>
+  </article>`;
+}
+
+function renderCards(filter){
+  const list = filter === "all" ? analyses : analyses.filter(a => a.category === filter);
+  grid.innerHTML = list.map(cardHTML).join("");
+}
+renderCards("all");
+
+/* ===================== TABS ===================== */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => {
+      b.classList.remove("tab-active");
+      b.classList.add("text-muted");
+    });
+    btn.classList.add("tab-active");
+    btn.classList.remove("text-muted");
+    renderCards(btn.dataset.filter);
+  });
+});
+
+/* ===================== TAM EKRAN ANALİZ SAYFASI ===================== */
+const apPage  = document.getElementById("analysisPage");
+const apImg   = document.getElementById("apImg");
+const apTag   = document.getElementById("apTag");
+const apTitle = document.getElementById("apTitle");
+const apClass = document.getElementById("apClass");
+const apDesc  = document.getElementById("apDesc");
+const apCode  = document.getElementById("apCode");
+
+/* HTML kaçışı */
+const esc = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* Assembly token renklendirme (syntax highlight) */
+const MNEMONICS = ["add","sub","mov","movups","movaps","jmp","jo","js","jne","jae","je",
+  "call","push","pop","in","out","outsb","insb","xor","or","and","adc","sbb","cmp","test",
+  "lea","imul","mul","xchg","fsub","fstp","fadd","ret","int","nop","dec","inc","shl","shr","not","neg"];
+const KEYWORDS = ["byte","word","dword","qword","ptr","xmmword"];
+
+function highlightAsm(line){
+  // "0x60:\tin\tal, 0x30" -> adres + komut + operandlar
+  const m = line.match(/^([0-9a-fx]+:)\t([^\t]+)(?:\t(.*))?$/i);
+  if(!m) return `<span class="asm-code">${esc(line)}</span>`;
+  const addr = `<span class="asm-addr">${esc(m[1])}</span>`;
+  const mn   = `<span class="t-mn">${esc(m[2])}</span>`;
+  let ops = m[3] ? esc(m[3]) : "";
+  if(ops){
+    // sayılar / portlar
+    ops = ops.replace(/\b(0x[0-9a-f]+|\d+)\b/gi, '<span class="t-num">$1</span>');
+    // keywordler
+    ops = ops.replace(new RegExp("\\b("+KEYWORDS.join("|")+")\\b","g"), '<span class="t-kw">$1</span>');
+    // registerlar (kalan tüm harf grupları)
+    ops = ops.replace(/\b([re]?[abcd]x|[abcd][lh]|[er]?[sd]i|[er]?[sb]p|r\d{1,2}d?|[cdefgs]s|xmm\d+|rip)\b/gi,
+      (w)=> /t-(num|kw)/.test(w) ? w : `<span class="t-reg">${w}</span>`);
+  }
+  return `<span class="asm-code">${mn}${ops ? " "+ops : ""}</span>`;
+}
+
+/* Genel kod (C / asm karışık) renklendirme */
+function highlightGeneric(line){
+  let s = esc(line);
+  s = s.replace(/(;.*$|\/\/.*$)/g, '<span class="t-cm">$1</span>');           // yorum
+  s = s.replace(/\b(0x[0-9a-f]+|\d+)\b/gi, '<span class="t-num">$1</span>');   // sayı
+  s = s.replace(new RegExp("\\b("+MNEMONICS.join("|")+")\\b","g"), '<span class="t-mn">$1</span>');
+  return `<span class="asm-code">${s}</span>`;
+}
+
+function renderCode(a){
+  const raw = a.asm || a.code || "";
+  const isAsm = !!a.asm;
+  const lines = raw.split("\n");
+  apCode.innerHTML = lines.map((ln, i) => {
+    const num = String(i+1).padStart(2,"0");
+    const body = isAsm ? highlightAsm(ln) : highlightGeneric(ln);
+    return `<div class="asm-line"><span class="asm-ln">${num}</span>${body}</div>`;
+  }).join("");
+}
+
+function openAnalysis(id){
+  const a = analyses.find(x => x.id === id);
+  if(!a) return;
+  apImg.src = a.imageURL; apImg.alt = a.title;
+  apTag.textContent = a.tag;
+  apTitle.textContent = a.title;
+  apClass.textContent = a.threatClass;
+  
+  // Sol taraftaki boş kalma sorununu çözen yeni paragraf motoru
+  const paras = Array.isArray(a.desc) ? a.desc : [a.desc];
+  apDesc.innerHTML = paras.map(p => `<p class="mb-4 text-gray-300 leading-relaxed text-sm font-sans border-b border-gray-800/30 pb-2 last:border-0">${p}</p>`).join("");
+  
+  renderCode(a);
+  
+  // Kod panelini ve pencereleri tam ekrana yayan esnek ayar
+  apPage.classList.remove("hidden");
+  apPage.style.display = "flex"; 
+  apPage.scrollTop = 0;
+  document.body.style.overflow = "hidden";
+}
+
+function closeAnalysis(){
+  apPage.classList.add("hidden");
+  apPage.style.display = "none";
+  document.body.style.overflow = "";
+}
+ 
+/* Tüm kartlar (grid + öne çıkanlar) tıklanabilir */
+document.addEventListener("click", (e) => {
+  const card = e.target.closest("[data-id]");
+  if(card){ openAnalysis(card.dataset.id); }
+});
+if(document.getElementById("backBtn")){
+  document.getElementById("backBtn").addEventListener("click", closeAnalysis);
+}
+document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeAnalysis(); });
+</script>
+
+</section>
+</body>
+</html>

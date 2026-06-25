@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberGuard // Zararlı Yazılım Analiz Laboratuvarı</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts (Sitenin Keskin Yazı Tipleri) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ANA SİTENİN BİREBİR RENK VE GRID AYARLARI */
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020813; /* Fotoğraftaki o derin koyu lacivert/mavi tonu */
+      /* SİTENİN ARKASINDAKİ SİBER IZGARA (GRID) EFEKTİ */
+      background-image: 
+        linear-gradient(to right, rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ANA SİTEDEKİ NEON YAZI PARILTISI (BOOTKIT kelimesindeki gibi) */
+    .cyber-neon-text {
+      color: #00f2fe;
+      text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+    }
+
+    /* KARTLARIN ARKA PLAN TONU VE KESKİN SİBER GÖLGESİ */
+    .cyber-card {
+      background-color: rgba(4, 15, 33, 0.7);
+      border: 1px border;
+      border-color: rgba(0, 242, 254, 0.15);
+    }
+    .cyber-card:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      box-shadow: 0 0 30px rgba(0, 242, 254, 0.1);
+    }
+  </style>
+</head>
+<body class="text-zinc-300 min-h-screen antialiased selection:bg-cyan-500/30 selection:text-cyan-300">
+
+  <!-- ÜST MENÜ (NAVBAR) - FOTOĞRAFTAKİ SİBER LOGO VE TASARIMIN BİREBİR AYNISI -->
+  <header class="w-full border-b border-cyan-500/10 bg(#020813)/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
+      
+      <!-- Logo Alanı (Fotoğraftaki kalkanlı siber logo yapısı) -->
+      <a href="cyberquad.html" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <div class="text-cyan-400">
+          <!-- Kalkan İkonu -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="mono text-sm font-extrabold tracking-[0.25em] text-white uppercase">CYBERGUARD</span>
+          <span class="mono text-[9px] tracking-[0.15em] text-cyan-400/60">// LAB_V0.1</span>
+        </div>
+      </a>
+      
+      <!-- Menü Linkleri (Fotoğraftaki tam sıralama ve boşluklar) -->
+      <nav class="hidden lg:flex items-center gap-x-8 mono text-[11px] tracking-[0.2em]">
+        <a href="cyberquad.html#anasayfa" class="text-zinc-400 hover:text-white transition-colors">ANA SAYFA</a>
+        <a href="cyberquad.html#analizler" class="text-zinc-400 hover:text-white transition-colors">ANALİZLER</a>
+        <a href="cyberquad.html#reverse" class="text-zinc-400 hover:text-white transition-colors">REVERSE ENGINEERING</a>
+        <a href="nasilkorunmaliyiz.html" class="text-cyan-400 font-bold border-b border-cyan-400 pb-1">NASIL KORUNMALIYIZ</a>
+        <a href="cyberquad.html#hakkimizda" class="text-zinc-400 hover:text-white transition-colors">HAKKIMIZDA</a>
+        <a href="cyberquad.html#iletisim" class="text-zinc-400 hover:text-white transition-colors">İLETİŞİM</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ANA İÇERİK ALANI -->
+  <main class="py-24 relative">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+      
+      <!-- Büyük Başlık Alanı (Fotoğraftaki Başlık Tarzı) -->
+      <div class="mb-24">
+        <span class="mono text-xs font-bold tracking-[0.25em] text-cyan-400/80 block mb-4">// CYBER_DEFENSE_LAB // V0.1.0</span>
+        <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white font-mono leading-tight uppercase">
+          ZARARLI YAZILIM VE <span class="cyber-neon-text">BOOTKIT</span><br>KORUNMA LABORATUVARI
+        </h2>
+        <p class="text-zinc-400 mt-6 text-sm md:text-base max-w-3xl font-sans font-normal leading-relaxed">
+          Statik ve dinamik analizlerini gerçekleştirdiğimiz gelişmiş tehdit aktörlerinin enfeksiyon vektörleri, işletim sistemi üzerindeki manipülasyonları ve teknik savunma yöntemleri.
+        </p>
+      </div>
+
+      <!-- Detaylı Tehdit ve Savunma Kartları -->
+      <div class="space-y-12">
+
+        <!-- KART 1: BOOTKIT VE ÇEKİRDEK SEVİYESİNDEKİ TEHDİTLER -->
+        <div class="cyber-card rounded-xl p-6 md:p-8 backdrop-blur-md transition-all duration-300">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3">
+              <span class="text-[9px] font-mono font-bold tracking-wider text-red-400 bg-red-500/10 px-2 py-1 border border-red-500/20 uppercase">TEHDİT SEVİYESİ: KRİTİK (KERNEL,BIOS)</span>
+              <h3 class="text-xl font-bold text-white mt-4 font-mono">1. BIOS Bootkit & MBR/VBR Zararlıları</h3>
+              <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                İşletim sistemi henüz yüklenmeden (boot aşamasında) tetiklenen, disk sektörlerini manipüle eden veya BIOS/UEFI katmanına sızan en tehlikeli zararlı sınıfıdır.
+              </p>
+            </div>
+            <div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 border-t lg:border-t-0 lg:border-l border-cyan-500/10 pt-6 lg:pt-0 lg:pl-8">
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-red-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Nasıl Bulaşır & Sızar?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  Genellikle sahte donanım sürücüleri, crackli işletim sistemi aktivasyon araçları veya doğrudan firmware güncellemelerini taklit eden gömülü exploit kitleri vasıtasıyla MBR kod bloğuna enjekte edilerek bulaşır.
+                </p>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-cyan-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Nasıl Önlenir & Korunulur?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  Anakart üzerindeki <code class="text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded font-mono border border-cyan-500/20">Secure Boot</code> ve <code class="text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded font-mono border border-cyan-500/20">TPM 2.0</code> protokolleri kesinlikle aktif olmalıdır. UEFI firmware şifrelenmeli ve imzasız sürücülerin çekirdek moduna yüklenmesi tamamen engellenmelidir. Zararlı bulaştıysa, kalıntıları temizlemek için Windows dışı tamamen izole bir Linux canlı USB ortamından disk analizi yapılmalıdır.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KART 2: AGENT TESLA VE BİLGİ HIRSIZLARI (INFOSTEALERS) -->
+        <div class="cyber-card rounded-xl p-6 md:p-8 backdrop-blur-md transition-all duration-300">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3">
+              <span class="text-[9px] font-mono font-bold tracking-wider text-orange-400 bg-orange-500/10 px-2 py-1 border border-orange-500/20 uppercase">TEHDİT SEVİYESİ: YÜKSEK (DATA THEFT)</span>
+              <h3 class="text-xl font-bold text-white mt-4 font-mono">2. Agent Tesla & Gelişmiş Infostealer'lar</h3>
+              <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                Kullanıcının tarayıcı şifrelerini, kripto para cüzdanlarını, çerezlerini ve sistem bilgilerini arka planda sessizce çalarak komuta merkezine ileten casus yazılımlardır.
+              </p>
+            </div>
+            <div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 border-t lg:border-t-0 lg:border-l border-cyan-500/10 pt-6 lg:pt-0 lg:pl-8">
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-red-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Nasıl Bulaşır & Sızar?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  En yaygın sızma yöntemi hedef odaklı oltalama e-postalarıdır. Kargo takibi, fatura dökümü süsü verilmiş e-posta eklerindeki <code class="text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded font-mono">.exe</code>, <code class="text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded font-mono">.vbs</code>, <code class="text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded font-mono">.scr</code> uzantılı dosyalar veya kötü niyetli makrolar içeren MS Office belgeleriyle tetiklenir.
+                </p>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-cyan-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Nasıl Önlenir & Korunulur?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  Ghidra analizinde gördüğümüz üzere bu zararlılar statik imzalardan kaçmak için <code class="text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded font-mono">GetProcAddress</code> ile runtime esnasında dinamik API çözerler. Bunu engellemek için davranışsal analiz yapan güncel bir EDR/Antivirüs bulunmalıdır. Windows Kayıt Defterindeki kalıcılık anahtarları Sysmon aracıyla denetlenmeli ve şüpheli dış ağ trafiği güvenlik duvarından izole edilmelidir.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KART 3: FIDYE YAZILIMLARI (RANSOMWARE) -->
+        <div class="cyber-card rounded-xl p-6 md:p-8 backdrop-blur-md transition-all duration-300">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3">
+              <span class="text-[9px] font-mono font-bold tracking-wider text-red-500 bg-red-500/10 px-2 py-1 border border-red-500/20 uppercase">TEHDİT SEVİYESİ: KRİTİK (DESTRUCTION)</span>
+              <h3 class="text-xl font-bold text-white mt-4 font-mono">3. Ransomware (Fidye Yazılımları)</h3>
+              <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                Sistemdeki tüm kullanıcı dosyalarını asimetrik şifreleme algoritmalarıyla kilitleyerek açılması karşılığında fidye talep eden yıkıcı yazılımlardır.
+              </p>
+            </div>
+            <div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 border-t lg:border-t-0 lg:border-l border-cyan-500/10 pt-6 lg:pt-0 lg:pl-8">
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-red-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Nasıl Bulaşır & Sızar?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  Kurumsal ağlarda açık bırakılan güvensiz uzak masaüstü portları (RDP zafiyetleri) ve güncellenmemiş ağ servislerinin (SMB gibi) doğrudan taranıp sızılmasıyla bulaşabileceği gibi; bireysel sistemlerde yine yukarıdaki Trojan ve Stealer zincirlerinin bir parçası olarak, crackli oyun/yazılım paketlerinin ardına gizlenmiş ikinci bir yük (payload) olarak sisteme enjekte edilir.
+                </p>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-cyan-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Nasıl Önlenir & Korunulur?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  En temel savunma hattı 3-2-1 kuralına uygun yedeklemedir. Şifreleme işlemlerini engellemek için Windows'un VSS (Volume Shadow Copy) gölge kopyalama servisinin zararlılar tarafından kapatılması politikalarla engellenmelidir. Ağ üzerindeki gereksiz tüm RDP (Port 3389) ve SMB (Port 445) servisleri tamamen kapatılmalı veya güçlü bir VPN arkasına alınmalıdır.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- YENİ KART 4: YENİ NESİL CREDENTIAL STEALERS (REDLINE, LUMMA, MARS) -->
+        <div class="cyber-card rounded-xl p-6 md:p-8 backdrop-blur-md transition-all duration-300">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3">
+              <span class="text-[9px] font-mono font-bold tracking-wider text-amber-400 bg-amber-500/10 px-2 py-1 border border-amber-500/20 uppercase">TEHDİT SEVİYESİ: YÜKSEK (IDENTITY CRIME)</span>
+              <h3 class="text-xl font-bold text-white mt-4 font-mono">3. RedLine & Lumma & Remus Stealer (Kimlik Avcıları)</h3>
+              <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                Tarayıcılarda kayıtlı tüm parolaları, Discord token'larını, Telegram oturumlarını, Steam hesap verilerini ve iki adımlı doğrulama (2FA) bypass çerezlerini anlık olarak çekip paketleyen malware türüdür.
+              </p>
+            </div>
+            <div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 border-t lg:border-t-0 lg:border-l border-cyan-500/10 pt-6 lg:pt-0 lg:pl-8">
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-red-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Nasıl Bulaşır & Sızar?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                Genellikle "ücretsiz" veya "crackli" olarak sunulan premium yazılımların, oyun hilelerinin (cheat) ve dijital tasarım araçlarının içerisine gömülerek dağıtılır. Saldırganlar, arama motorlarında üst sıralara çıkardıkları sahte web siteleri veya açık kaynak kodlu platformlardaki güvenilir süsü verilmiş depolar (repository) vasıtasıyla kullanıcıları manipüle ederek zararlıyı kendi elleriyle indirmelerini sağlar.                </p>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-cyan-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Nasıl Önlenir & Korunulur?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  Tarayıcılarda asla <code class="text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded font-mono">"Şifreleri Kaydet"</code> özelliği kullanılmamalıdır; bunun yerine ana şifreli lokal Password Manager'lar tercih edilmelidir. Şüpheli yazılımlar çalıştırılmadan önce mutlaka bağımsız Windows Sandbox veya Bottles/Proton mimarisine sahip tamamen izole bir Linux sandbox alanında izlenmelidir. Bulaşma şüphesinde doğrudan tüm aktif web oturumları (Log Out All Sessions) sonlandırılmalıdır.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- YENİ KART 5: TRUVA ATALARI (TROJAN HORSE) -->
+        <div class="cyber-card rounded-xl p-6 md:p-8 backdrop-blur-md transition-all duration-300">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/3">
+              <span class="text-[9px] font-mono font-bold tracking-wider text-orange-400 bg-orange-500/10 px-2 py-1 border border-orange-500/20 uppercase">TEHDİT SEVİYESİ: ORTA / YÜKSEK (BACKDOOR)</span>
+              <h3 class="text-xl font-bold text-white mt-4 font-mono">4. Trojan Horse & Uzaktan Erişim Virüsleri (RAT)</h3>
+              <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                Kendini tamamen meşru ve zararsız bir program (oyun yaması, pdf okuyucu, sistem aracı) gibi göstererek sisteme sızan, arka planda bir arka kapı (Backdoor) açarak saldırgana tam yetkili uzaktan erişim sağlayan klasik ama en ölümcül enfeksiyon türüdür.
+              </p>
+            </div>
+            <div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8 border-t lg:border-t-0 lg:border-l border-cyan-500/10 pt-6 lg:pt-0 lg:pl-8">
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-red-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Nasıl Bulaşır & Sızar?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  Güvenilir olmayan üçüncü taraf web sitelerinden indirilen "ücretsiz" yazılımlar, crack dosyaları veya e-posta eklerine gizlenmiş makrolar yoluyla bulaşır. Kullanıcı kendi eliyle dosyayı çalıştırdığı anda sistem haklarını zararlıya teslim etmiş olur.
+                </p>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold tracking-widest text-cyan-300 font-mono uppercase flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Nasıl Önlenir & Korunulur?
+                </h4>
+                <p class="text-zinc-400 text-xs mt-3 leading-relaxed font-sans font-normal">
+                  İndirilen executable dosyaların dijital imzaları (<code class="text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded font-mono">Digital Signatures</code>) mutlaka kontrol edilmelidir. Ağ seviyesinde, tersine bağlantı (Reverse Connection) kurmaya çalışan bilinmeyen port aktivitelerini yakalamak için sistem sıkı bir firewall ile izlenmeli, sistem arka planında çalışan yabancı süreçler (ProcessExplorer veya Linux tabanlı analiz araçlarıyla) düzenli olarak denetlenmelidir.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Alt Kapanış Notu -->
+      <div class="mt-20 bg-gradient-to-r from-cyan-950/30 via-cyan-900/10 to-cyan-950/30 border border-cyan-500/10 rounded-xl p-6 md:p-8 text-center backdrop-blur-sm">
+        <p class="text-zinc-400 text-xs md:text-sm tracking-wide font-sans leading-relaxed">
+          🛑 <span class="text-cyan-400 font-bold font-mono">Mavi Takım (Blue Team) Notu:</span> Tersine mühendislik süreçlerinde gördüğümüz gibi, zararlı yazılımlar statik engelleri aşmak için her gün yeni anti-analiz yöntemleri geliştirmektedir. Sistem güvenliğinin anahtarı; dışarıdan gelen imzasız dosyaları ana makinede çalıştırmak yerine, Linux tabanlı konteynerler veya Proton/Bottles gibi izole sanal katmanlarda test ederek proaktif savunma bilinci oluşturmaktır.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>
