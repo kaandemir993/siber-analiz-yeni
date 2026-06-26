@@ -11,16 +11,14 @@ Geliştirilen bu arayüz; siber analiz süreçlerini, laboratuvar bünyesinde ba
 *Bilgisayar ortamında (localhost) tıkır tıkır çalışan arayüz tasarımlarına ve menü geçişlerine ait ekran görüntüleri aşağıdadır:*
 
 ### 1. Ana Sayfa (Cyberquad / Karşılama Ekranı)
-![Ana Sayfa Ekran Görüntüsü](ekran_goruntuleri/ana-sayfa.png)
+
+
 
 ### 2. Laboratuvar Hakkımızda & Donanım Standartları
-![Hakkımızda Sayfası](ekran_goruntuleri/hakkimizda.png)
 
 *(Geliştirme Notu: Canlı ortam (deployment) platformlarındaki dizin/sunucu optimizasyonları devam etmektedir. Localhost ortamındaki menü geçişlerinin ve fonksiyonların tam performanslı çalışmasını gösteren kısa tanıtım videosuna aşağıdan ulaşabilirsiniz.)*
 
-🎥 **[Laboratuvar Arayüzü Tanıtım Videosunu İzle](VİDEO_LİNKİ_BURAYA_GELECEK)**
 
----
 
 ## 🛠️ Teknik Altyapı ve Özellikler
 
